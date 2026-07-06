@@ -10,6 +10,8 @@
 
 use serde::{Deserialize, Serialize};
 
+pub mod crypto;
+
 /// Protocol version. Bump on breaking wire changes.
 pub const PROTOCOL_VERSION: u16 = 1;
 

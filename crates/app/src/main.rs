@@ -35,6 +35,9 @@ enum Command {
         /// Number of ping/pong round trips to measure.
         #[arg(short, long, default_value_t = 20_000)]
         count: usize,
+        /// Measure with full X25519 + ChaCha20-Poly1305 encryption enabled.
+        #[arg(long)]
+        encrypted: bool,
     },
     /// Run as the server (the machine whose keyboard & mouse are shared).
     Serve {
@@ -66,7 +69,7 @@ fn main() -> anyhow::Result<()> {
 
     let cli = Cli::parse();
     match cli.command {
-        Command::Bench { count } => bench::run(count),
+        Command::Bench { count, encrypted } => bench::run(count, encrypted),
         #[cfg(feature = "native")]
         Command::Serve { bind } => run::serve(&bind),
         #[cfg(feature = "native")]

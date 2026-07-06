@@ -7,8 +7,10 @@
 //! loopback proves the hot path adds negligible overhead.
 
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+use shareclick_protocol::crypto::{Handshake, Role};
 use shareclick_protocol::InputMsg;
 
 use crate::transport::InputChannel;
@@ -19,11 +21,28 @@ fn now_nanos(start: Instant) -> u64 {
 
 /// Run `count` round trips over loopback and print latency statistics as
 /// autoresearch-style `METRIC` lines.
-pub fn run(count: usize) -> anyhow::Result<()> {
+pub fn run(count: usize, encrypted: bool) -> anyhow::Result<()> {
     let loopback = |port: u16| SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::LOCALHOST, port));
 
+    // Optionally establish a real X25519 + ChaCha20-Poly1305 session so the
+    // measured RTT includes the full encrypt/decrypt cost on every packet.
+    let (send_sess, recv_sess) = if encrypted {
+        let psk = b"benchmark-preshared-key";
+        let a = Handshake::new();
+        let b = Handshake::new();
+        let (a_pub, b_pub) = (a.public_bytes(), b.public_bytes());
+        let sa = a.complete(b_pub, psk, Role::Initiator)?;
+        let sb = b.complete(a_pub, psk, Role::Responder)?;
+        (Some(Arc::new(sa)), Some(Arc::new(sb)))
+    } else {
+        (None, None)
+    };
+
     // Responder: echoes Ping -> Pong.
-    let responder = InputChannel::bind(loopback(0), None)?;
+    let mut responder = InputChannel::bind(loopback(0), None)?;
+    if let Some(s) = recv_sess {
+        responder = responder.with_cipher(s);
+    }
     let responder_addr = responder.local_addr()?;
     let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
     let stop_r = stop.clone();
@@ -50,7 +69,10 @@ pub fn run(count: usize) -> anyhow::Result<()> {
     });
 
     // Sender.
-    let sender = InputChannel::bind(loopback(0), Some(responder_addr))?;
+    let mut sender = InputChannel::bind(loopback(0), Some(responder_addr))?;
+    if let Some(s) = send_sess {
+        sender = sender.with_cipher(s);
+    }
     sender.set_read_timeout(Some(Duration::from_millis(200)))?;
     let start = Instant::now();
     let mut buf = [0u8; 2048];
@@ -92,7 +114,7 @@ pub fn run(count: usize) -> anyhow::Result<()> {
     let p99_us = pct(0.99);
     let owl_us = median_us / 2.0; // one-way latency estimate
 
-    println!("samples={} lost={}", rtts_ns.len(), lost);
+    println!("mode={} samples={} lost={}", if encrypted { "encrypted" } else { "plain" }, rtts_ns.len(), lost);
     println!("METRIC rtt_median_us={median_us:.2}");
     println!("METRIC rtt_p99_us={p99_us:.2}");
     println!("METRIC rtt_mean_us={mean_us:.2}");
