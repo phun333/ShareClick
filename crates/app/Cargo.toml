@@ -17,3 +17,13 @@ thiserror.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 clap = { version = "4", features = ["derive"] }
+
+# Native input capture/emulation + clipboard. Gated so the transport core and
+# latency benchmark always build without platform permissions.
+enigo = { version = "0.6", optional = true }
+rdev = { version = "0.5", optional = true }
+arboard = { version = "3", optional = true }
+
+[features]
+default = ["native"]
+native = ["dep:enigo", "dep:rdev", "dep:arboard"]

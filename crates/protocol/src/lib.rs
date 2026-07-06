@@ -32,6 +32,33 @@ pub enum MouseButton {
     Other(u8),
 }
 
+/// OS-independent key identifier.
+///
+/// macOS and Windows use different raw keycodes, so forwarding a raw scancode
+/// would break cross-platform sharing. Instead we translate each side's native
+/// key into this portable enum on capture and back into a native key on
+/// injection (the same approach Synergy/Deskflow take with their key IDs).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Key {
+    // Letters
+    A, B, C, D, E, F, G, H, I, J, K, L, M,
+    N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
+    // Digits (top row)
+    Num0, Num1, Num2, Num3, Num4, Num5, Num6, Num7, Num8, Num9,
+    // Function keys
+    F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
+    // Navigation / editing
+    Escape, Tab, CapsLock, Space, Backspace, Enter, Delete, Insert,
+    Home, End, PageUp, PageDown, Left, Right, Up, Down,
+    // Punctuation (US layout physical positions)
+    Minus, Equal, LeftBracket, RightBracket, Backslash, Semicolon,
+    Quote, Backquote, Comma, Dot, Slash,
+    // Modifiers
+    LShift, RShift, LCtrl, RCtrl, LAlt, RAlt, LMeta, RMeta,
+    // Fallback: a native keycode we could not map portably.
+    Unknown(u32),
+}
+
 /// A single low-level input event. Kept as small as possible on the wire.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum InputEvent {
@@ -41,8 +68,8 @@ pub enum InputEvent {
     MouseButton { button: MouseButton, pressed: bool },
     /// Scroll wheel deltas (high-resolution / pixel units when available).
     Scroll { dx: f32, dy: f32 },
-    /// Keyboard key transition, addressed by an OS-independent scancode.
-    Key { code: u32, pressed: bool },
+    /// Keyboard key transition using a portable [`Key`].
+    Key { key: Key, pressed: bool },
 }
 
 /// Messages carried on the **input** (UDP) channel.
@@ -138,7 +165,7 @@ mod tests {
             seq: 42,
             msg: InputMsg::Events(vec![
                 InputEvent::MouseMove { dx: -3, dy: 7 },
-                InputEvent::MouseButton { button: MouseButton::Left, pressed: true },
+                InputEvent::Key { key: Key::A, pressed: true },
             ]),
         };
         let bytes = pkt.encode().unwrap();

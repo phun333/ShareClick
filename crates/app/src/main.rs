@@ -6,6 +6,15 @@
 mod bench;
 mod transport;
 
+#[cfg(feature = "native")]
+mod capture;
+#[cfg(feature = "native")]
+mod emit;
+#[cfg(feature = "native")]
+mod keymap;
+#[cfg(feature = "native")]
+mod run;
+
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -47,13 +56,13 @@ fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     match cli.command {
         Command::Bench { count } => bench::run(count),
-        Command::Serve { bind } => {
-            tracing::info!(%bind, "serve mode not yet implemented (transport ready)");
-            Ok(())
-        }
-        Command::Connect { server } => {
-            tracing::info!(%server, "connect mode not yet implemented (transport ready)");
-            Ok(())
+        #[cfg(feature = "native")]
+        Command::Serve { bind } => run::serve(&bind),
+        #[cfg(feature = "native")]
+        Command::Connect { server } => run::connect(&server),
+        #[cfg(not(feature = "native"))]
+        Command::Serve { .. } | Command::Connect { .. } => {
+            anyhow::bail!("serve/connect require the `native` feature (build without --no-default-features)")
         }
     }
 }
