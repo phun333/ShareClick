@@ -89,7 +89,9 @@ jobs:
               → Open Anyway.)
             * **Windows** SmartScreen: **More info → Run anyway**.
 
-            👉 Full step-by-step: https://github.com/phun333/ShareClick/blob/main/docs/INSTALL.md
+            👉 Install help: https://github.com/phun333/ShareClick/blob/main/docs/INSTALL.md
 
-            Then click the menu-bar / tray icon → **Settings** to set your shared
-            passphrase and screen layout.
+            **How to use it:** open the app (menu-bar / tray) → **Settings** → set
+            the same passphrase + layout on both machines → **Start Server** on one,
+            **Start Client** on the other. Full step-by-step (Mac + Windows):
+            https://github.com/phun333/ShareClick/blob/main/docs/USAGE.md

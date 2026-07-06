@@ -21,9 +21,17 @@ Grab the installer for your OS from the
 > get past — **[full step-by-step in docs/INSTALL.md](./docs/INSTALL.md)**.
 > macOS quick fix if it says "damaged": `xattr -cr /Applications/ShareClick.app`.
 
-Then click the menu-bar / tray icon → **Settings & Monitor Manager** to set a
-shared passphrase (same on both machines) and your screen layout. Building from
-source is only needed for development — see [docs/](./docs/).
+## How to use it (60 seconds)
+
+On **both** machines: open ShareClick (menu-bar on macOS, system tray on
+Windows) → **Settings & Monitor Manager** → set the **same passphrase** and your
+screen layout → save. Then on the machine with the keyboard/mouse click **Start
+Server**, and on the other click **Start Client**. Push your mouse into the
+shared screen edge to jump across; copy/paste and files sync automatically.
+
+👉 **Full step-by-step (macOS + Windows, UI and terminal): [docs/USAGE.md](./docs/USAGE.md).**
+
+Building from source is only needed for development — see [docs/](./docs/).
 
 ## Documentation
 
