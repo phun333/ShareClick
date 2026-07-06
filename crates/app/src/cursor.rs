@@ -9,8 +9,9 @@
 use shareclick_protocol::Edge;
 
 /// Pixels the cursor must move inward before a return is armed. Prevents an
-/// instant bounce-back right after entering at the border.
-const ARM_MARGIN: i32 = 8;
+/// instant bounce-back right after entering at the border. Deliberately large
+/// so normal cursor use doesn't accidentally hand control back.
+const ARM_MARGIN: i32 = 60;
 
 /// Integrates relative motion and detects a return across the border edge.
 #[derive(Debug, Clone)]

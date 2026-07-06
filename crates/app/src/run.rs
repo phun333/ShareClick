@@ -143,9 +143,12 @@ fn run_server_input(
         if active != prev_active {
             if let Some(p) = peer {
                 if active {
-                    let (edge, entry) = *control.entry.lock().unwrap();
-                    // Send the client's *entry* edge (opposite of our exit edge).
-                    let _ = udp.send_to(InputMsg::Enter { edge: opposite(edge), entry }, p);
+                    // Only ask the client to track a return border when control
+                    // was handed over by an actual edge crossing. Manual toggles
+                    // (both-Shift / F12) send nothing — the user toggles back.
+                    if let Some((edge, entry)) = *control.entry.lock().unwrap() {
+                        let _ = udp.send_to(InputMsg::Enter { edge: opposite(edge), entry }, p);
+                    }
                 } else {
                     let _ = udp.send_to(InputMsg::Leave, p);
                 }

@@ -12,15 +12,19 @@ use shareclick_protocol::Edge;
 /// Shared, thread-safe control state.
 pub struct Control {
     pub active: AtomicBool,
-    /// Edge + normalized (0..1) position the cursor last left this screen from.
-    pub entry: Mutex<(Edge, f32)>,
+    /// How the client last gained control:
+    ///  * `Some((edge, pos))` — the cursor crossed a screen edge, so the client
+    ///    should track its cursor and auto-return at that border.
+    ///  * `None` — a manual toggle (both-Shift / F12); no edge tracking, the
+    ///    user toggles back manually.
+    pub entry: Mutex<Option<(Edge, f32)>>,
 }
 
 impl Control {
     pub fn new() -> Self {
         Self {
             active: AtomicBool::new(false),
-            entry: Mutex::new((Edge::Left, 0.5)),
+            entry: Mutex::new(None),
         }
     }
 }

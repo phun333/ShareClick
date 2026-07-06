@@ -45,7 +45,8 @@ pub fn run(tx: Sender<InputEvent>, control: Arc<Control>, edges: EdgeConfig) -> 
     let toggle = move |control: &Control| {
         let now = !control.active.load(Ordering::Relaxed);
         if now {
-            *control.entry.lock().unwrap() = (Edge::Left, 0.5);
+            // Manual toggle: no edge, so the client does NOT auto-return.
+            *control.entry.lock().unwrap() = None;
         }
         control.active.store(now, Ordering::Relaxed);
         tracing::info!(active = now, "control toggled (hotkey)");
@@ -93,7 +94,7 @@ pub fn run(tx: Sender<InputEvent>, control: Arc<Control>, edges: EdgeConfig) -> 
                         Edge::Left | Edge::Right => y as f32 / edges.height.max(1) as f32,
                         Edge::Top | Edge::Bottom => x as f32 / edges.width.max(1) as f32,
                     };
-                    *control.entry.lock().unwrap() = (edge, frac);
+                    *control.entry.lock().unwrap() = Some((edge, frac));
                     control.active.store(true, Ordering::Relaxed);
                     tracing::info!(?edge, "cursor crossed edge; control handed to client");
                 }
