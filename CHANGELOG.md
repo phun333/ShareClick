@@ -40,5 +40,5 @@ First release. A complete, low-latency, open-source software KVM.
 - Builds are unsigned (Gatekeeper/SmartScreen prompt on first launch).
 - One client at a time; no sliding-window UDP anti-replay yet.
 
-[Unreleased]: https://github.com/ali/ShareClick/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/ali/ShareClick/releases/tag/v0.1.0
+[Unreleased]: https://github.com/phun333/ShareClick/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/phun333/ShareClick/releases/tag/v0.1.0

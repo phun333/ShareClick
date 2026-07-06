@@ -11,7 +11,7 @@
 #define MyAppName "ShareClick"
 #define MyAppPublisher "ShareClick"
 #define MyAppExeName "shareclick.exe"
-#define MyAppURL "https://github.com/ali/ShareClick"
+#define MyAppURL "https://github.com/phun333/ShareClick"
 
 [Setup]
 AppId={{9F5B2C31-4E8A-4C1F-9A2D-7B3E6C1A0D42}

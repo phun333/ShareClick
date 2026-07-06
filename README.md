@@ -10,7 +10,7 @@ first.
 ## Download & install (no Rust required)
 
 Grab the installer for your OS from the
-[**Releases**](https://github.com/ali/ShareClick/releases) page:
+[**Releases**](https://github.com/phun333/ShareClick/releases) page:
 
 - **macOS:** `ShareClick-*.dmg` → open, drag **ShareClick** to Applications. On
   first launch grant **Accessibility** + **Input Monitoring** (System Settings →
