@@ -1,0 +1,121 @@
+# ShareClick
+
+**A low-latency, open-source software KVM.** Move one keyboard & mouse — plus
+the clipboard and files — between your macOS and Windows machines over the LAN,
+with the lowest input lag we can squeeze out.
+
+Think ShareMouse / Synergy / Deskflow, but free, open, and built for latency
+first.
+
+> Status: **early MVP.** Transport + native input capture/injection work and are
+> benchmarked. Clipboard, file transfer, and seamless edge-switching are on the
+> roadmap below.
+
+---
+
+## Why another one?
+
+We surveyed everything in this space before writing a line of code:
+
+| Tool | License | Mouse/KB | Clipboard | Files | Notes |
+|------|---------|:--------:|:---------:|:-----:|-------|
+| **ShareMouse** | 💰 Paid | ✅ | ✅ | ✅ | Nice UX, but licensed |
+| **Synergy** | 💰 Paid | ✅ | ✅ | ✅ | Built on Deskflow |
+| **Deskflow** | 🟢 GPLv2 | ✅ | ✅ | ⚠️ | Most mature free option |
+| **Input Leap** | 🟢 GPLv2 | ✅ | ✅ | ⚠️ | Living Barrier fork |
+| **Barrier** | 🟢 | ✅ | ✅ | ❌ | ⛔ Unmaintained |
+| **Lan Mouse** | 🟢 | ✅ | ❌ | ❌ | Fastest/cleanest, but input-only |
+| **ShareClick** | 🟢 MIT/Apache | ✅ | 🛠️ | 🛠️ | Latency-first, taking the best of all |
+
+**What we took from each:**
+
+- **Lan Mouse** → UDP input path + active/inactive state model → lowest latency.
+- **Deskflow/Synergy** → portable key IDs, clipboard & file transfer features.
+- **ShareMouse** → the UX goal: drag-and-drop files should "just work".
+
+## Architecture
+
+Two logical channels, each optimized for its job:
+
+```
+        macOS (server)                         Windows (client)
+   ┌───────────────────────┐   UDP input    ┌───────────────────────┐
+   │ rdev capture          │ ─────────────▶ │ enigo injection       │
+   │  → portable Key/mouse  │  (tiny, seq-#, │  ← portable Key/mouse  │
+   │  → coalesced per tick  │   dedup'd)     │                       │
+   ├───────────────────────┤  TCP bulk      ├───────────────────────┤
+   │ clipboard / files      │ ◀────────────▶ │ clipboard / files      │
+   └───────────────────────┘  (reliable)    └───────────────────────┘
+```
+
+- **Input channel (UDP):** dedicated blocking socket (no async scheduler
+  jitter), postcard-encoded packets, monotonic sequence numbers so late/dup
+  packets are dropped instead of blocking. Events are **coalesced per poll
+  tick** to avoid the classic "jumpiness" when mouse polling rate exceeds the
+  display refresh rate.
+- **Bulk channel (reliable):** clipboard sync and chunked file transfer, where
+  ordering matters more than microseconds.
+- **Portable keys:** macOS and Windows use different raw keycodes, so we
+  translate native keys into a portable `Key` enum on capture and back on
+  injection (same idea as Synergy's key IDs).
+
+### Measured latency
+
+Transport overhead is negligible — the OS event path and LAN dominate:
+
+```
+$ shareclick bench --count 20000
+METRIC rtt_median_us=~12     # loopback round-trip
+METRIC oneway_us=~6          # one-way transport overhead
+```
+
+~6 µs one-way transport overhead means our code is not the bottleneck; real
+input lag will be LAN RTT (~0.2–1 ms) + OS injection. We keep the bench in the
+repo so latency regressions get caught immediately.
+
+## Build & run
+
+Requires [Rust](https://rustup.rs). Native input needs OS permission:
+**macOS** → System Settings ▸ Privacy & Security ▸ Accessibility (add your
+terminal / the binary). **Windows** → run once, allow through the firewall.
+
+```bash
+# Build
+cargo build --release
+
+# Benchmark the input transport (no permissions needed)
+./target/release/shareclick bench --count 20000
+
+# On the machine whose keyboard & mouse you want to share:
+./target/release/shareclick serve --bind 0.0.0.0:24800
+
+# On the other machine:
+./target/release/shareclick connect 192.168.1.20:24800
+```
+
+Build the portable core without native deps (for CI / headless):
+
+```bash
+cargo build --release -p shareclick --no-default-features
+```
+
+## Roadmap
+
+- [x] Hybrid UDP/reliable transport with sequence numbers
+- [x] Latency benchmark harness
+- [x] Native input capture (rdev) + injection (enigo)
+- [x] Portable cross-platform key mapping
+- [ ] Seamless edge-switching + local input suppression on the server
+- [ ] Encryption (X25519 handshake + ChaCha20-Poly1305) on both channels
+- [ ] Clipboard sync (text + images) over the bulk channel
+- [ ] Drag-and-drop file transfer
+- [ ] Multi-monitor / multi-client layouts
+- [ ] Auto-discovery (mDNS) so you don't type IPs
+- [ ] Tray app / GUI
+
+See [`autoresearch.ideas.md`](./autoresearch.ideas.md) for deeper technical
+notes and optimization ideas.
+
+## License
+
+Dual-licensed under MIT or Apache-2.0.
