@@ -5,6 +5,7 @@
 
 mod bench;
 mod bulk;
+mod config;
 mod filexfer;
 mod transport;
 
@@ -57,6 +58,12 @@ enum Command {
         /// Path to the file to send.
         path: String,
     },
+    /// Write a starter config file (settings + monitor manager) you can edit.
+    InitConfig {
+        /// Where to write it (defaults to the platform config dir).
+        #[arg(long)]
+        path: Option<String>,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
@@ -77,6 +84,18 @@ fn main() -> anyhow::Result<()> {
         #[cfg(not(feature = "native"))]
         Command::Serve { .. } | Command::Connect { .. } => {
             anyhow::bail!("serve/connect require the `native` feature (build without --no-default-features)")
+        }
+        Command::InitConfig { path } => {
+            let path = path
+                .map(std::path::PathBuf::from)
+                .unwrap_or_else(config::Config::default_path);
+            if path.exists() {
+                anyhow::bail!("config already exists at {} (refusing to overwrite)", path.display());
+            }
+            config::Config::example().save(&path)?;
+            println!("wrote starter config to {}", path.display());
+            println!("edit the [psk] and [[machines]] layout, then run `serve` / `connect`.");
+            Ok(())
         }
         Command::SendFile { to, path } => {
             use std::net::ToSocketAddrs;

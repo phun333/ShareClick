@@ -17,6 +17,8 @@ thiserror.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 clap = { version = "4", features = ["derive"] }
+toml = "0.8"
+dirs = "5"
 
 # Native input capture/emulation + clipboard. Gated so the transport core and
 # latency benchmark always build without platform permissions.
