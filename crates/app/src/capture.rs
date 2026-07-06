@@ -27,6 +27,30 @@ use crate::keymap;
 /// Hotkey that toggles whether control is on the remote client.
 pub const TOGGLE_KEY: rdev::Key = rdev::Key::F12;
 
+// On macOS, rdev's grab does not suppress mouse-move events, so while the client
+// has control we "freeze" the local cursor by warping it back to an anchor after
+// every move and forward the physical delta. Re-associating immediately clears
+// the ~250 ms event-suppression deadzone that a bare warp would otherwise cause.
+#[cfg(target_os = "macos")]
+#[repr(C)]
+struct CGPoint {
+    x: f64,
+    y: f64,
+}
+#[cfg(target_os = "macos")]
+#[link(name = "CoreGraphics", kind = "framework")]
+extern "C" {
+    fn CGWarpMouseCursorPosition(p: CGPoint) -> i32;
+    fn CGAssociateMouseAndMouseCursorPosition(connected: bool) -> i32;
+}
+#[cfg(target_os = "macos")]
+fn warp_cursor(x: f64, y: f64) {
+    unsafe {
+        CGWarpMouseCursorPosition(CGPoint { x, y });
+        CGAssociateMouseAndMouseCursorPosition(true);
+    }
+}
+
 /// Start capturing in the current thread. Blocks until the grab loop errors.
 /// Captured [`InputEvent`]s are sent on `tx` only while `active` is set.
 ///
@@ -35,6 +59,9 @@ pub const TOGGLE_KEY: rdev::Key = rdev::Key::F12;
 pub fn run(tx: Sender<InputEvent>, control: Arc<Control>, edges: EdgeConfig) -> anyhow::Result<()> {
     // grab's callback is `Fn` (not `FnMut`) so mutable state lives behind locks.
     let last_pos: Mutex<Option<(f64, f64)>> = Mutex::new(None);
+    // macOS cursor-freeze anchor (see the warp helper above).
+    #[cfg(target_os = "macos")]
+    let anchor: Mutex<Option<(f64, f64)>> = Mutex::new(None);
     // Reliable escape hotkey: BOTH Shift keys held together toggles control.
     // Works on every keyboard and (unlike F12 on macOS, which is a media key)
     // is captured reliably by rdev. This is the "get me unstuck" combo.
@@ -103,17 +130,54 @@ pub fn run(tx: Sender<InputEvent>, control: Arc<Control>, edges: EdgeConfig) -> 
 
         let is_active = control.active.load(Ordering::Relaxed);
 
+        // Reset the freeze anchor whenever control is local again.
+        #[cfg(target_os = "macos")]
+        if !is_active {
+            *anchor.lock().unwrap() = None;
+        }
+
         let mapped = match event.event_type {
             EventType::MouseMove { x, y } => {
-                let mut lp = last_pos.lock().unwrap();
-                let ev = match *lp {
-                    Some((px, py)) => Some(InputEvent::MouseMove {
+                #[cfg(target_os = "macos")]
+                let ev = if is_active {
+                    // Capture mode: freeze the local cursor, forward physical delta.
+                    let mut a = anchor.lock().unwrap();
+                    match *a {
+                        Some((ax, ay)) => {
+                            let (dx, dy) = ((x - ax).round() as i32, (y - ay).round() as i32);
+                            if dx != 0 || dy != 0 {
+                                warp_cursor(ax, ay);
+                                Some(InputEvent::MouseMove { dx, dy })
+                            } else {
+                                None
+                            }
+                        }
+                        None => {
+                            *a = Some((x, y));
+                            None
+                        }
+                    }
+                } else {
+                    let mut lp = last_pos.lock().unwrap();
+                    let e = (*lp).map(|(px, py)| InputEvent::MouseMove {
                         dx: (x - px).round() as i32,
                         dy: (y - py).round() as i32,
-                    }),
-                    None => None,
+                    });
+                    *lp = Some((x, y));
+                    e
                 };
-                *lp = Some((x, y));
+                #[cfg(not(target_os = "macos"))]
+                let ev = {
+                    // Other platforms: grab suppresses locally, so a plain
+                    // per-event delta is correct.
+                    let mut lp = last_pos.lock().unwrap();
+                    let e = (*lp).map(|(px, py)| InputEvent::MouseMove {
+                        dx: (x - px).round() as i32,
+                        dy: (y - py).round() as i32,
+                    });
+                    *lp = Some((x, y));
+                    e
+                };
                 ev
             }
             EventType::ButtonPress(b) => Some(InputEvent::MouseButton {
