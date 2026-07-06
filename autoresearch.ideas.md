@@ -15,11 +15,22 @@
 - Portable `Key` enum (Synergy-style) — never forward raw OS keycodes.
 - Per-tick event coalescing.
 
-## Next up (roadmap detail)
-- **Edge-switching + local suppression:** server must *grab*/suppress local input while the remote client is active, and release cursor at screen edges. macOS: CGEventTap with tap that can swallow events (rdev `unstable_grab` feature). Windows: low-level hook returning 1 to consume. This is the biggest UX gap right now — currently `serve` mirrors input rather than handing it off.
-- **Encryption:** X25519 ECDH handshake → ChaCha20-Poly1305 AEAD per packet. Nonce = seq counter. Handshake over the reliable channel, derive input-channel key from it. Reference: InputSync repo.
-- **Clipboard sync:** arboard poll (or native change notifications) → BulkMsg::Clipboard. Debounce to avoid ping-pong loops; tag origin so you don't echo back what you just received.
-- **File transfer:** FileBegin/Chunk/End already in protocol. Add backpressure + progress + resume-by-offset. Consider zero-copy sendfile later.
+## DONE (Phase 1 + 2)
+- [x] Local input suppression + F12 handoff (rdev unstable_grab)
+- [x] Clipboard sync with echo suppression (arboard)
+- [x] File transfer (chunked, offset writes, path-traversal safe)
+- [x] Encryption: ephemeral X25519 + PSK (HKDF salt) + ChaCha20-Poly1305 on BOTH channels; per-channel + per-direction keys; ~20ns measured cost
+- [x] Settings + monitor-manager config (TOML)
+- [x] Automatic edge-switching (server->client) via neighbour graph
+- [x] macOS menu-bar / Windows tray UI (tray-icon + tao, `tray` feature)
+
+## Next up (polish)
+- **Client-side return edge:** client tracks injected cursor position from relative deltas + its screen size; when it hits the return edge, send InputMsg::Leave so the server flips control back automatically (today F12 reclaims). Enter/Leave already exist in the protocol.
+- **Tray Start Client:** needs a `server_host` setting; wire the menu action to actually dial it.
+- **Clipboard images:** ClipboardData::Image already in protocol; add arboard image get/set.
+- **mDNS discovery:** advertise `_shareclick._udp` so peers find each other without typing IPs.
+- **serve multi-client / reconnect:** currently one session at a time; make the UDP cipher swappable (arc-swap) so capture can keep running across reconnects.
+- **Progress + backpressure** for large file transfers; zero-copy sendfile later.
 
 ## Latency optimization ideas (measure with `shareclick bench`)
 - Try QUIC for the bulk channel only (keep UDP raw for input) — encryption + reliability without HOL-blocking input.
