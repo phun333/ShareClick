@@ -6,6 +6,7 @@
 mod bench;
 mod bulk;
 mod config;
+mod edge;
 mod filexfer;
 mod transport;
 

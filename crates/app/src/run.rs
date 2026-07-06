@@ -24,6 +24,7 @@ use crate::bulk::BulkConn;
 use crate::capture;
 use crate::clipboard;
 use crate::config::Config;
+use crate::edge::EdgeConfig;
 use crate::filexfer::FileReceiver;
 use crate::transport::InputChannel;
 
@@ -123,12 +124,25 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
     tracing::info!(%bind_addr, name = %cfg.name, "serving; press F12 to hand control to the client");
     tracing::info!("grant Accessibility permission on macOS for capture to work");
 
+    // Monitor manager: which of our screen edges border another machine?
+    let edges = match cfg.machine(&cfg.name) {
+        Some(m) if cfg.auto_edge_switch => EdgeConfig::new(
+            m.screen.0,
+            m.screen.1,
+            m.left.is_some(),
+            m.right.is_some(),
+            m.top.is_some(),
+            m.bottom.is_some(),
+        ),
+        _ => EdgeConfig::none(),
+    };
+
     // Capture runs once, globally, feeding a channel. Control starts local.
     let (tx, rx) = mpsc::channel();
     let active = Arc::new(AtomicBool::new(false));
     let active_cap = active.clone();
     std::thread::spawn(move || {
-        if let Err(e) = capture::run(tx, active_cap) {
+        if let Err(e) = capture::run(tx, active_cap, edges) {
             tracing::error!(error = %e, "capture thread stopped");
         }
     });

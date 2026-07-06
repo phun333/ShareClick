@@ -20,6 +20,7 @@ use std::sync::{Arc, Mutex};
 use rdev::{Event, EventType};
 use shareclick_protocol::{InputEvent, MouseButton};
 
+use crate::edge::EdgeConfig;
 use crate::keymap;
 
 /// Hotkey that toggles whether control is on the remote client.
@@ -27,7 +28,10 @@ pub const TOGGLE_KEY: rdev::Key = rdev::Key::F12;
 
 /// Start capturing in the current thread. Blocks until the grab loop errors.
 /// Captured [`InputEvent`]s are sent on `tx` only while `active` is set.
-pub fn run(tx: Sender<InputEvent>, active: Arc<AtomicBool>) -> anyhow::Result<()> {
+///
+/// `edges` enables automatic hand-off: when control is local and the cursor
+/// reaches a bordered screen edge, control flips to the client automatically.
+pub fn run(tx: Sender<InputEvent>, active: Arc<AtomicBool>, edges: EdgeConfig) -> anyhow::Result<()> {
     // grab's callback is `Fn` (not `FnMut`) so mutable state lives behind locks.
     let last_pos: Mutex<Option<(f64, f64)>> = Mutex::new(None);
 
@@ -39,6 +43,17 @@ pub fn run(tx: Sender<InputEvent>, active: Arc<AtomicBool>) -> anyhow::Result<()
                 active.store(now, Ordering::Relaxed);
                 tracing::info!(active = now, "control toggled");
                 return None;
+            }
+        }
+
+        // Automatic edge hand-off: while control is local, a cursor touching a
+        // bordered edge switches control to the client.
+        if !active.load(Ordering::Relaxed) {
+            if let EventType::MouseMove { x, y } = event.event_type {
+                if let Some(edge) = edges.hit(x.round() as i32, y.round() as i32) {
+                    active.store(true, Ordering::Relaxed);
+                    tracing::info!(?edge, "cursor crossed edge; control handed to client");
+                }
             }
         }
 
