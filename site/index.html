@@ -3,263 +3,150 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>shareclick — low-latency open-source software KVM</title>
-<meta name="description" content="Share one keyboard, mouse, clipboard and files between your Mac and Windows PC over the LAN. Encrypted, open-source, lowest input lag. No account, no cloud." />
+<title>shareclick</title>
+<meta name="description" content="One keyboard & mouse across Mac and Windows. Encrypted, open-source, lowest input lag." />
 <meta property="og:title" content="shareclick" />
-<meta property="og:description" content="One keyboard & mouse across Mac and Windows. Encrypted, open-source, ~6µs transport lag." />
+<meta property="og:description" content="One keyboard & mouse across Mac and Windows. Encrypted, open-source." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#fafafa;
-    --card:#ffffff;
-    --ink:#111111;
-    --muted:#6b7280;
-    --line:#e7e7e7;
-    --line-strong:#d9d9d9;
-    --accent:#2563eb;
-    --radius:14px;
+    --bg:#fafafa; --card:#fff; --ink:#111; --muted:#6b7280;
+    --line:#e7e7e7; --line-strong:#d9d9d9; --accent:#2563eb; --radius:14px;
   }
   *{box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%}
   body{
-    margin:0;
-    background:var(--bg);
-    color:var(--ink);
-    font-family:'JetBrains Mono', ui-monospace, 'SF Mono', 'Roboto Mono', Menlo, monospace;
-    font-size:15px;
-    line-height:1.55;
-    -webkit-font-smoothing:antialiased;
-    text-rendering:optimizeLegibility;
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
+    font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;
+    min-height:100vh;display:flex;flex-direction:column;
   }
   a{color:var(--accent);text-decoration:none}
   a:hover{text-decoration:underline}
-  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  .wrap{width:100%;max-width:920px;margin:0 auto;padding:0 24px}
+  svg{display:block}
 
-  /* top bar */
-  header{display:flex;align-items:center;justify-content:space-between;padding:22px 0}
+  header{display:flex;align-items:center;justify-content:space-between;padding:24px 0}
   .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.02em}
-  .dot{width:12px;height:12px;border-radius:50%;background:var(--ink);display:inline-block}
-  nav a{color:var(--muted);margin-left:22px;font-size:13px}
-  nav a:hover{color:var(--ink);text-decoration:none}
+  .dot{width:11px;height:11px;border-radius:50%;background:var(--ink)}
+  header a.icon{color:var(--muted)}
+  header a.icon:hover{color:var(--ink)}
 
-  /* hero */
-  .hero{padding:64px 0 20px;text-align:center}
-  h1{
-    font-size:clamp(64px,13vw,168px);
-    font-weight:800;
-    letter-spacing:-.04em;
-    line-height:.92;
-    margin:0;
-  }
-  .tag{color:var(--muted);font-size:clamp(15px,2.4vw,19px);margin:22px auto 0;max-width:640px}
+  main{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 0}
+  .hero{text-align:center}
+  h1{font-size:clamp(72px,15vw,180px);font-weight:800;letter-spacing:-.045em;line-height:.9;margin:0}
+  .tag{color:var(--muted);font-size:clamp(15px,2.6vw,19px);margin:20px auto 0;max-width:520px}
   .tag b{color:var(--ink);font-weight:500}
 
-  /* download */
-  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:34px 0 8px}
-  .btn{
-    display:inline-flex;align-items:center;gap:10px;
-    background:var(--ink);color:#fff;
-    padding:12px 20px;border-radius:10px;font-weight:500;font-size:14px;
-    border:1px solid var(--ink);transition:transform .08s ease,opacity .15s ease;
-  }
+  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:36px 0 0}
+  .btn{display:inline-flex;align-items:center;gap:10px;background:var(--ink);color:#fff;
+    padding:13px 22px;border-radius:11px;font-weight:500;font-size:14px;
+    border:1px solid var(--ink);transition:transform .08s,opacity .15s}
   .btn:hover{opacity:.9;text-decoration:none;transform:translateY(-1px)}
   .btn.ghost{background:transparent;color:var(--ink);border-color:var(--line-strong)}
-  .btn small{color:inherit;opacity:.6;font-size:11px}
-  .btn.ghost small{opacity:.55}
-  .subnote{text-align:center;color:var(--muted);font-size:12.5px;margin-top:8px}
+  .btn svg{width:17px;height:17px}
+  .sub{text-align:center;color:var(--muted);font-size:12.5px;margin:14px 0 0}
 
-  /* metric strip echoing the reference slider motif */
-  .strip{
-    display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:center;
-    border:1px solid var(--line);background:var(--card);border-radius:var(--radius);
-    padding:16px 22px;margin:40px 0 0;
-  }
-  .slider{display:flex;align-items:center;gap:0;min-width:120px}
-  .slider .track{height:4px;width:70px;background:#e5e5e5;border-radius:99px}
-  .slider .knob{width:16px;height:16px;border-radius:50%;background:var(--ink);margin-left:-4px}
-  .strip .metric{font-size:13px;color:var(--muted)}
-  .strip .metric b{color:var(--ink);font-weight:700}
-  .strip .sep{width:1px;height:22px;background:var(--line);}
+  .facts{display:flex;gap:14px;justify-content:center;align-items:center;flex-wrap:wrap;
+    margin:40px 0 0;color:var(--muted);font-size:13px}
+  .facts b{color:var(--ink);font-weight:700}
+  .facts .s{width:1px;height:16px;background:var(--line)}
+  .slider{display:inline-flex;align-items:center}
+  .slider .track{height:4px;width:44px;background:#e5e5e5;border-radius:99px}
+  .slider .knob{width:14px;height:14px;border-radius:50%;background:var(--ink);margin-left:-4px}
 
-  /* section */
-  section{padding:64px 0}
-  h2{font-size:clamp(30px,6vw,52px);font-weight:800;letter-spacing:-.03em;margin:0 0 6px;text-transform:lowercase}
-  .lead{color:var(--muted);margin:0 0 34px;max-width:620px}
+  .feat{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);
+    border-radius:var(--radius);overflow:hidden;background:var(--card);margin:56px 0 0}
+  .feat div{padding:20px 22px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);font-size:13.5px}
+  .feat b{display:block;font-weight:700;color:var(--ink);margin-bottom:2px}
+  .feat span{color:var(--muted);font-size:12.5px}
+  .feat div:nth-child(3n){border-right:none}
+  .feat div:nth-last-child(-n+3){border-bottom:none}
 
-  /* feature grid */
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--card)}
-  .cell{padding:26px 26px 30px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
-  .cell:nth-child(3n){border-right:none}
-  .cell:nth-last-child(-n+3){border-bottom:none}
-  .cell h3{margin:0 0 8px;font-size:15px;font-weight:700}
-  .cell p{margin:0;color:var(--muted);font-size:13.5px}
-  .cell .k{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:0 0 4px}
-  .cell .k span{font-size:13px;color:var(--muted);font-weight:400}
+  footer{padding:26px 0;color:var(--muted);font-size:12.5px}
+  .frow{display:flex;justify-content:space-between;align-items:center;gap:16px}
+  .flinks{display:flex;align-items:center;gap:16px}
+  .flinks a{color:var(--muted);display:inline-flex}
+  .flinks a:hover{color:var(--ink)}
+  .flinks svg{width:16px;height:16px}
 
-  /* steps */
-  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-  .step{border:1px solid var(--line);background:var(--card);border-radius:var(--radius);padding:24px}
-  .step .n{font-size:12px;color:var(--muted)}
-  .step h3{margin:6px 0 8px;font-size:16px;font-weight:700}
-  .step p{margin:0;color:var(--muted);font-size:13.5px}
-  .step code{background:#f2f2f2;padding:2px 7px;border-radius:6px;font-size:12.5px;color:var(--ink)}
-  .note{color:var(--muted);font-size:12.5px;margin-top:18px}
-  sup{color:var(--muted)}
-
-  /* footer */
-  footer{border-top:1px solid var(--line);padding:34px 0 60px;color:var(--muted);font-size:13px}
-  .frow{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;align-items:center}
-  footer a{color:var(--muted)}
-  footer a:hover{color:var(--ink);text-decoration:none}
-
-  @media (max-width:760px){
-    .grid{grid-template-columns:1fr}
-    .cell{border-right:none}
-    .cell:nth-last-child(-n+3){border-bottom:1px solid var(--line)}
-    .cell:last-child{border-bottom:none}
-    .steps{grid-template-columns:1fr}
-    nav{display:none}
+  @media(max-width:680px){
+    .feat{grid-template-columns:1fr}
+    .feat div{border-right:none}
+    .feat div:nth-last-child(-n+3){border-bottom:1px solid var(--line)}
+    .feat div:last-child{border-bottom:none}
   }
 </style>
 </head>
 <body>
-<div class="wrap">
 
+<div class="wrap">
   <header>
     <div class="brand"><span class="dot"></span> shareclick</div>
-    <nav>
-      <a href="#features">features</a>
-      <a href="#start">quick start</a>
-      <a href="https://github.com/ali/ShareClick">github</a>
-    </nav>
+    <a class="icon" href="https://github.com/ali/ShareClick" aria-label="GitHub">
+      <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-1.8c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.8 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.5-2.7 5.5-5.3 5.8.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+    </a>
   </header>
+</div>
 
-  <div class="hero">
+<main>
+  <div class="wrap hero">
     <h1>shareclick</h1>
-    <p class="tag">one keyboard &amp; mouse across your <b>Mac</b> and <b>Windows PC</b>.
-       clipboard and files too. encrypted, open-source, and built for the
-       <b>lowest input lag</b>.</p>
+    <p class="tag">one keyboard &amp; mouse across your <b>Mac</b> and <b>Windows PC</b> — clipboard and files too.</p>
 
     <div class="cta">
-      <a class="btn" id="dl-mac" href="https://github.com/ali/ShareClick/releases">
-        download for macOS <small>.dmg</small>
+      <a class="btn" id="dl-mac" href="https://github.com/ali/ShareClick/releases" aria-label="Download for macOS">
+        <svg viewBox="0 0 384 512"><path fill="currentColor" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
+        macOS
       </a>
-      <a class="btn ghost" id="dl-win" href="https://github.com/ali/ShareClick/releases">
-        download for Windows <small>.exe</small>
+      <a class="btn ghost" id="dl-win" href="https://github.com/ali/ShareClick/releases" aria-label="Download for Windows">
+        <svg viewBox="0 0 448 512"><path fill="currentColor" d="M0 93.7l183.6-25.3v177.4H0V93.7zm0 324.6l183.6 25.3V268.4H0v149.9zm203.8 28L448 480V268.4H203.8v177.9zm0-380.6v180.1H448V32L203.8 65.7z"/></svg>
+        Windows
       </a>
     </div>
-    <p class="subnote">free &amp; open source · no account · no cloud · no Rust required</p>
+    <p class="sub">free · open source · no account · no cloud</p>
 
-    <div class="strip">
-      <div class="slider"><div class="track"></div><div class="knob"></div></div>
-      <div class="metric"><b>~6&nbsp;µs</b> transport lag</div>
-      <div class="sep"></div>
-      <div class="metric"><b>X25519</b> + ChaCha20-Poly1305</div>
-      <div class="sep"></div>
-      <div class="metric"><b>LAN-only</b> · self-hosted</div>
+    <div class="facts">
+      <span class="slider"><span class="track"></span><span class="knob"></span></span>
+      <span><b>~6&nbsp;µs</b> lag</span>
+      <span class="s"></span>
+      <span><b>encrypted</b></span>
+      <span class="s"></span>
+      <span><b>LAN-only</b></span>
+    </div>
+
+    <div class="feat">
+      <div><b>lowest lag</b><span>UDP input, ~6µs</span></div>
+      <div><b>encrypted</b><span>X25519 · ChaCha20</span></div>
+      <div><b>clipboard &amp; files</b><span>text, images, files</span></div>
+      <div><b>edge switch</b><span>push to the border</span></div>
+      <div><b>auto-discover</b><span>mDNS, no IPs</span></div>
+      <div><b>open source</b><span>MIT / Apache-2.0</span></div>
     </div>
   </div>
+</main>
 
-  <section id="features">
-    <h2>everything, nothing extra</h2>
-    <p class="lead">the good parts of ShareMouse, Synergy and Deskflow — free,
-       open, and faster.</p>
-
-    <div class="grid">
-      <div class="cell">
-        <div class="k">~6<span>µs</span></div>
-        <h3>lowest input lag</h3>
-        <p>UDP input path on a dedicated socket, events coalesced per tick. the
-           network is the only bottleneck — not the code.</p>
-      </div>
-      <div class="cell">
-        <h3>end-to-end encrypted</h3>
-        <p>X25519 + a shared passphrase authenticate both machines, then
-           ChaCha20-Poly1305 seals every packet. ~20 ns cost.</p>
-      </div>
-      <div class="cell">
-        <h3>clipboard &amp; files</h3>
-        <p>copy text or images on one machine, paste on the other. send files
-           straight across the encrypted channel.</p>
-      </div>
-      <div class="cell">
-        <h3>seamless switching</h3>
-        <p>push the cursor into a screen edge and control jumps to the other
-           machine. push back and it returns. no hotkey needed.</p>
-      </div>
-      <div class="cell">
-        <h3>zero-config discovery</h3>
-        <p>peers find each other on the LAN over mDNS. no IP addresses to
-           type — the passphrase still proves identity.</p>
-      </div>
-      <div class="cell">
-        <h3>open source</h3>
-        <p>MIT / Apache-2.0. a single tiny binary, menu-bar on macOS, system
-           tray on Windows. inspect it, fork it, run it.</p>
-      </div>
-    </div>
-  </section>
-
-  <section id="start">
-    <h2>up and running in a minute</h2>
-    <p class="lead">install on both machines, share a passphrase, done.</p>
-
-    <div class="steps">
-      <div class="step">
-        <div class="n">01</div>
-        <h3>install</h3>
-        <p>grab the <code>.dmg</code> on your Mac and the <code>.exe</code> on
-           your PC. both launch to the menu-bar / tray.</p>
-      </div>
-      <div class="step">
-        <div class="n">02</div>
-        <h3>set a passphrase</h3>
-        <p>open <b>Settings &amp; Monitor Manager</b>, pick the same secret
-           passphrase on both, and lay out which screen is where.</p>
-      </div>
-      <div class="step">
-        <div class="n">03</div>
-        <h3>just move</h3>
-        <p>slide your cursor to the shared edge — your keyboard &amp; mouse now
-           drive the other machine. clipboard syncs automatically.</p>
-      </div>
-    </div>
-
-    <p class="note">
-      macOS asks for <b>Accessibility</b> + <b>Input Monitoring</b> permission on
-      first launch<sup>†</sup>. Windows asks to allow it through the firewall<sup>‡</sup>.
-      both machines must be on the same network.
-    </p>
-  </section>
-
+<div class="wrap">
   <footer>
     <div class="frow">
-      <div><span class="dot" style="width:9px;height:9px"></span>&nbsp; shareclick — open-source software KVM</div>
-      <div>
-        <a href="https://github.com/ali/ShareClick">github</a> ·
-        <a href="https://github.com/ali/ShareClick/releases">releases</a> ·
-        <a href="https://github.com/ali/ShareClick/blob/main/docs/README.md">docs</a> ·
-        <span>MIT / Apache-2.0</span>
+      <div><span class="dot" style="width:8px;height:8px;display:inline-block"></span>&nbsp; open-source software KVM</div>
+      <div class="flinks">
+        <a href="https://github.com/ali/ShareClick" aria-label="GitHub">
+          <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-1.8c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.8 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.5-2.7 5.5-5.3 5.8.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+        </a>
+        <span>MIT</span>
       </div>
     </div>
   </footer>
-
 </div>
 
 <script>
-  // Emphasize the visitor's OS download button (purely cosmetic).
   (function(){
-    var p = navigator.platform || "";
-    var ua = navigator.userAgent || "";
-    var isWin = /Win/i.test(p) || /Windows/i.test(ua);
-    var isMac = /Mac/i.test(p) || (/Macintosh/i.test(ua) && !/iPhone|iPad/i.test(ua));
-    if (isWin){
+    var ua=navigator.userAgent||"",p=navigator.platform||"";
+    if(/Win/i.test(p)||/Windows/i.test(ua)){
       document.getElementById('dl-win').classList.remove('ghost');
       document.getElementById('dl-mac').classList.add('ghost');
-    } else if (isMac){
-      // default already emphasizes macOS
     }
   })();
 </script>
