@@ -157,6 +157,7 @@ find the server automatically over mDNS — running `connect` with no
 | Client can't connect | Same Wi‑Fi? Firewall allowed on Windows? Correct `server_host` IP? Try `shareclick discover`. |
 | `name ... is not present` | `name` must match a `[[machines]]` entry. |
 | Nothing happens at the edge | Check the layout edges (`right`/`left`) and that `auto_edge_switch = true`. F12 always works as a fallback. |
+| Windows: no tray icon after launching | New icons hide under the **"^" (show hidden icons)** arrow by the clock — drag ShareClick onto the taskbar. For a first test you can skip the tray entirely and run `shareclick.exe connect` from PowerShell. |
 
 Still stuck? Open an issue with the terminal output from both machines:
 <https://github.com/phun333/ShareClick/issues>.
