@@ -20,6 +20,8 @@ mod emit;
 mod keymap;
 #[cfg(feature = "native")]
 mod run;
+#[cfg(feature = "tray")]
+mod tray;
 
 use clap::{Parser, Subcommand};
 
@@ -65,6 +67,8 @@ enum Command {
         #[arg(long)]
         path: Option<String>,
     },
+    /// Launch the menu-bar (macOS) / system-tray (Windows) app.
+    Tray,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -85,6 +89,12 @@ fn main() -> anyhow::Result<()> {
         #[cfg(not(feature = "native"))]
         Command::Serve { .. } | Command::Connect { .. } => {
             anyhow::bail!("serve/connect require the `native` feature (build without --no-default-features)")
+        }
+        #[cfg(feature = "tray")]
+        Command::Tray => tray::run(),
+        #[cfg(not(feature = "tray"))]
+        Command::Tray => {
+            anyhow::bail!("tray UI not built in; rebuild with `cargo build --release --features tray`")
         }
         Command::InitConfig { path } => {
             let path = path

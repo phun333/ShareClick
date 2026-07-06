@@ -99,6 +99,34 @@ cargo build --release
 #   → lands in ./received on the peer.
 ```
 
+### Settings, encryption & the monitor manager
+
+```bash
+# Create an editable config (settings + monitor-manager layout):
+./target/release/shareclick init-config
+#   → set a strong `psk` (identical on both machines — it authenticates the
+#     peers and derives the ChaCha20-Poly1305 session keys) and describe which
+#     machine borders which screen edge. serve/connect then require this file.
+```
+
+The **monitor manager** is the `[[machines]]` layout: each machine lists its
+screen size and which peer sits on each edge. When `auto_edge_switch` is on,
+pushing the cursor into a bordered edge hands control to that neighbour.
+
+### Menu-bar / tray app
+
+```bash
+# Build with the GUI front-end and launch it:
+cargo build --release --features tray
+./target/release/shareclick tray
+```
+
+* **macOS:** a status item appears in the top-right menu bar (no dock icon).
+* **Windows:** an icon appears in the system tray.
+
+The menu exposes Start Server / Start Client, **Settings & Monitor Manager…**
+(opens `config.toml`), and Quit.
+
 Build the portable core without native deps (for CI / headless):
 
 ```bash
@@ -114,9 +142,14 @@ cargo build --release -p shareclick --no-default-features
 - [x] Control handoff hotkey (F12) + local input suppression (`rdev` grab)
 - [x] Clipboard sync (text) over the bulk channel
 - [x] File transfer (`send-file`, chunked, resumable-by-offset)
-- [ ] Encryption (X25519 handshake + ChaCha20-Poly1305) on both channels
-- [ ] Automatic edge-switching (cursor crosses screen edge, no hotkey)
+- [x] Encryption: X25519 + PSK handshake + ChaCha20-Poly1305 on both channels
+      (measured ~20 ns extra latency — see the encrypted benchmark)
+- [x] Settings + monitor manager (`config.toml`)
+- [x] Automatic edge-switching (cursor crosses a bordered screen edge)
+- [x] Menu-bar (macOS) / system-tray (Windows) app (`--features tray`)
+- [ ] Client-side return-edge detection (auto reclaim without F12)
 - [ ] Clipboard images
+- [ ] mDNS auto-discovery
 - [ ] Multi-monitor / multi-client layouts
 - [ ] Auto-discovery (mDNS) so you don't type IPs
 - [ ] Tray app / GUI
