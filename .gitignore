@@ -1,0 +1,11 @@
+# Rust build artifacts
+/target/
+**/*.rs.bk
+
+# Packaging output
+/dist/
+packaging/windows/Output/
+*.dmg
+
+# OS junk
+.DS_Store

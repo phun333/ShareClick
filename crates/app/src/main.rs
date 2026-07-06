@@ -33,7 +33,7 @@ use clap::{Parser, Subcommand};
 #[command(name = "shareclick", version, about = "Low-latency open-source software KVM")]
 struct Cli {
     #[command(subcommand)]
-    command: Command,
+    command: Option<Command>,
 }
 
 #[derive(Subcommand)]
@@ -87,7 +87,25 @@ fn main() -> anyhow::Result<()> {
         .init();
 
     let cli = Cli::parse();
-    match cli.command {
+
+    // No subcommand (e.g. double-clicked app icon) → launch the GUI tray.
+    let command = match cli.command {
+        Some(c) => c,
+        None => {
+            #[cfg(feature = "tray")]
+            {
+                return tray::run();
+            }
+            #[cfg(not(feature = "tray"))]
+            {
+                use clap::CommandFactory;
+                Cli::command().print_help().ok();
+                return Ok(());
+            }
+        }
+    };
+
+    match command {
         Command::Bench { count, encrypted } => bench::run(count, encrypted),
         #[cfg(feature = "native")]
         Command::Serve { bind } => run::serve(&bind),

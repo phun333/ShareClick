@@ -1,0 +1,86 @@
+name: Release
+
+# Push a tag like v0.1.0 to build installers for every platform and attach
+# them to a GitHub Release. End users just download — no Rust required.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  macos:
+    name: macOS (.dmg, universal)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+      - name: Build ShareClick.app + .dmg
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          bash packaging/macos/build-app.sh "$VERSION"
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: dist/*.dmg
+
+  windows:
+    name: Windows (.exe installer)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build release binary
+        run: cargo build --release --features tray
+      - name: Build installer (Inno Setup)
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          if (-not $version) { $version = "0.0.0" }
+          choco install innosetup --no-progress -y
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+            "/DMyAppVersion=$version" packaging\windows\shareclick.iss
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: packaging/windows/Output/*.exe
+
+  release:
+    name: Publish GitHub Release
+    needs: [macos, windows]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/macos-dmg/*.dmg
+            artifacts/windows-installer/*.exe
+          generate_release_notes: true
+          body: |
+            ## ShareClick ${{ github.ref_name }}
+
+            **Download & install — no Rust required:**
+            * **macOS:** `ShareClick-*.dmg` → open, drag ShareClick to Applications.
+              On first launch grant **Accessibility** + **Input Monitoring**
+              (System Settings → Privacy & Security). Unsigned build: if blocked,
+              right-click the app → **Open**.
+            * **Windows:** `ShareClick-Setup-*.exe` → run it (no admin needed).
+
+            Then click the menu-bar / tray icon → **Settings** to set your shared
+            passphrase and screen layout. See the README for details.
