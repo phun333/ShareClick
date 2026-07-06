@@ -4,7 +4,9 @@
 #![cfg(feature = "native")]
 
 use std::net::{SocketAddr, TcpListener, TcpStream, ToSocketAddrs};
+use std::sync::atomic::AtomicBool;
 use std::sync::mpsc;
+use std::sync::Arc;
 use std::time::Duration;
 
 use shareclick_protocol::{BulkMsg, ClipboardData, InputMsg};
@@ -85,10 +87,14 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
         });
     }
 
-    // Capture runs on its own thread (rdev::listen blocks).
+    // Capture runs on its own thread (rdev::grab blocks). Control starts on the
+    // local machine; press F12 to hand it to the client (and again to reclaim).
     let (tx, rx) = mpsc::channel();
+    let active = Arc::new(AtomicBool::new(false));
+    let active_cap = active.clone();
+    tracing::info!("press F12 to toggle control between this machine and the client");
     std::thread::spawn(move || {
-        if let Err(e) = capture::run(tx) {
+        if let Err(e) = capture::run(tx, active_cap) {
             tracing::error!(error = %e, "capture thread stopped");
         }
     });

@@ -88,9 +88,15 @@ cargo build --release
 
 # On the machine whose keyboard & mouse you want to share:
 ./target/release/shareclick serve --bind 0.0.0.0:24800
+#   → press F12 to hand control to the client; F12 again to reclaim it.
+#     While the client has control, local input on the server is suppressed.
 
 # On the other machine:
 ./target/release/shareclick connect 192.168.1.20:24800
+
+# Send a file to a peer (clipboard syncs automatically once connected):
+./target/release/shareclick send-file 192.168.1.20:24800 ./report.pdf
+#   → lands in ./received on the peer.
 ```
 
 Build the portable core without native deps (for CI / headless):
@@ -105,10 +111,12 @@ cargo build --release -p shareclick --no-default-features
 - [x] Latency benchmark harness
 - [x] Native input capture (rdev) + injection (enigo)
 - [x] Portable cross-platform key mapping
-- [ ] Seamless edge-switching + local input suppression on the server
+- [x] Control handoff hotkey (F12) + local input suppression (`rdev` grab)
+- [x] Clipboard sync (text) over the bulk channel
+- [x] File transfer (`send-file`, chunked, resumable-by-offset)
 - [ ] Encryption (X25519 handshake + ChaCha20-Poly1305) on both channels
-- [ ] Clipboard sync (text + images) over the bulk channel
-- [ ] Drag-and-drop file transfer
+- [ ] Automatic edge-switching (cursor crosses screen edge, no hotkey)
+- [ ] Clipboard images
 - [ ] Multi-monitor / multi-client layouts
 - [ ] Auto-discovery (mDNS) so you don't type IPs
 - [ ] Tray app / GUI

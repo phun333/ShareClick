@@ -1,65 +1,95 @@
-//! Server-side input capture using `rdev`.
+//! Server-side input capture using `rdev`'s global grab.
 //!
-//! `rdev::listen` runs a blocking global event loop (needs Accessibility on
-//! macOS). We translate native events into portable [`InputEvent`]s and push
-//! them onto a channel for the network sender to consume.
+//! Unlike a passive listener, `grab` lets us **consume** events so the local
+//! machine does not react while control has been handed to the remote client —
+//! this is what turns ShareClick from an input *mirror* into a real KVM.
+//!
+//! A toggle hotkey ([`TOGGLE_KEY`]) flips the shared `active` flag:
+//!  * **active**   → events are forwarded to the client and swallowed locally.
+//!  * **inactive** → events pass straight through to this machine, nothing sent.
 //!
 //! rdev reports **absolute** cursor positions; we convert to relative deltas so
 //! the client's cursor tracks motion without coupling to screen geometry.
 
 #![cfg(feature = "native")]
 
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::Sender;
+use std::sync::{Arc, Mutex};
 
+use rdev::{Event, EventType};
 use shareclick_protocol::{InputEvent, MouseButton};
 
 use crate::keymap;
 
-/// Start capturing in the current thread. Blocks until the listener errors.
-/// Each captured [`InputEvent`] is sent on `tx`.
-pub fn run(tx: Sender<InputEvent>) -> anyhow::Result<()> {
-    let mut last_pos: Option<(f64, f64)> = None;
+/// Hotkey that toggles whether control is on the remote client.
+pub const TOGGLE_KEY: rdev::Key = rdev::Key::F12;
 
-    let callback = move |event: rdev::Event| {
+/// Start capturing in the current thread. Blocks until the grab loop errors.
+/// Captured [`InputEvent`]s are sent on `tx` only while `active` is set.
+pub fn run(tx: Sender<InputEvent>, active: Arc<AtomicBool>) -> anyhow::Result<()> {
+    // grab's callback is `Fn` (not `FnMut`) so mutable state lives behind locks.
+    let last_pos: Mutex<Option<(f64, f64)>> = Mutex::new(None);
+
+    let callback = move |event: Event| -> Option<Event> {
+        // Toggle hotkey: always consumed, never forwarded.
+        if let EventType::KeyPress(k) = event.event_type {
+            if k == TOGGLE_KEY {
+                let now = !active.load(Ordering::Relaxed);
+                active.store(now, Ordering::Relaxed);
+                tracing::info!(active = now, "control toggled");
+                return None;
+            }
+        }
+
+        let is_active = active.load(Ordering::Relaxed);
+
         let mapped = match event.event_type {
-            rdev::EventType::MouseMove { x, y } => {
-                let ev = match last_pos {
+            EventType::MouseMove { x, y } => {
+                let mut lp = last_pos.lock().unwrap();
+                let ev = match *lp {
                     Some((px, py)) => Some(InputEvent::MouseMove {
                         dx: (x - px).round() as i32,
                         dy: (y - py).round() as i32,
                     }),
-                    None => None, // first sample only establishes the origin
+                    None => None,
                 };
-                last_pos = Some((x, y));
+                *lp = Some((x, y));
                 ev
             }
-            rdev::EventType::ButtonPress(b) => Some(InputEvent::MouseButton {
+            EventType::ButtonPress(b) => Some(InputEvent::MouseButton {
                 button: to_button(b),
                 pressed: true,
             }),
-            rdev::EventType::ButtonRelease(b) => Some(InputEvent::MouseButton {
+            EventType::ButtonRelease(b) => Some(InputEvent::MouseButton {
                 button: to_button(b),
                 pressed: false,
             }),
-            rdev::EventType::Wheel { delta_x, delta_y } => Some(InputEvent::Scroll {
+            EventType::Wheel { delta_x, delta_y } => Some(InputEvent::Scroll {
                 dx: delta_x as f32,
                 dy: delta_y as f32,
             }),
-            rdev::EventType::KeyPress(k) => Some(InputEvent::Key {
+            EventType::KeyPress(k) => Some(InputEvent::Key {
                 key: keymap::from_rdev(k),
                 pressed: true,
             }),
-            rdev::EventType::KeyRelease(k) => Some(InputEvent::Key {
+            EventType::KeyRelease(k) => Some(InputEvent::Key {
                 key: keymap::from_rdev(k),
                 pressed: false,
             }),
         };
-        if let Some(ev) = mapped {
-            let _ = tx.send(ev);
+
+        if is_active {
+            if let Some(ev) = mapped {
+                let _ = tx.send(ev);
+            }
+            None // swallow locally: control belongs to the remote client
+        } else {
+            Some(event) // let this machine handle it normally
         }
     };
 
-    rdev::listen(callback).map_err(|e| anyhow::anyhow!("input capture failed: {e:?}"))?;
+    rdev::grab(callback).map_err(|e| anyhow::anyhow!("input capture failed: {e:?}"))?;
     Ok(())
 }
 
