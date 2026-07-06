@@ -76,6 +76,8 @@ enum Command {
     Tray,
     /// Discover ShareClick servers on the local network via mDNS.
     Discover,
+    /// Print the detected screen size (debug).
+    ScreenInfo,
 }
 
 /// Hide the console window that Windows opens when the exe is double-clicked,
@@ -148,6 +150,14 @@ fn main() -> anyhow::Result<()> {
         }
         #[cfg(not(feature = "native"))]
         Command::Discover => anyhow::bail!("discover requires the `native` feature"),
+        #[cfg(feature = "native")]
+        Command::ScreenInfo => {
+            let (w, h) = emit::main_display_size()?;
+            println!("detected main display: {w} x {h}");
+            Ok(())
+        }
+        #[cfg(not(feature = "native"))]
+        Command::ScreenInfo => anyhow::bail!("screen-info requires the `native` feature"),
         #[cfg(feature = "tray")]
         Command::Tray => tray::run(),
         #[cfg(not(feature = "tray"))]

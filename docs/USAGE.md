@@ -31,6 +31,9 @@ roles — just swap which one runs "server" vs "client".)
    (`config.toml`).
 3. Edit it (see the fields below), **save**, and close the editor.
 
+> Screen sizes are **auto-detected** — you don't set them. (Add
+> `screen = [w, h]` under a machine only to override a wrong detection.)
+
 **On the Mac (server)** set:
 ```toml
 name = "mac"                    # this machine's name
@@ -40,12 +43,10 @@ auto_edge_switch = true
 
 [[machines]]
 name = "mac"
-screen = [1470, 956]            # this Mac's resolution
 right  = "windows"              # the PC is to the right of the Mac
 
 [[machines]]
 name = "windows"
-screen = [1920, 1080]           # the PC's resolution
 left   = "mac"
 ```
 
@@ -60,12 +61,10 @@ server_host = "192.168.1.20"    # the Mac's IP (see "Find the server's IP")
 
 [[machines]]
 name = "mac"
-screen = [1470, 956]
 right  = "windows"
 
 [[machines]]
 name = "windows"
-screen = [1920, 1080]
 left   = "mac"
 ```
 
@@ -144,7 +143,7 @@ find the server automatically over mDNS — running `connect` with no
 | `port` | Network port (default 24800). Same on both. |
 | `auto_edge_switch` | Hand control over when the cursor hits a bordered edge. |
 | `server_host` | (Client only) the server's IP, e.g. `192.168.1.20`. Omit to auto‑discover. |
-| `[[machines]]` | The layout: each machine's `screen = [w, h]` and which peer is on each edge (`left`/`right`/`top`/`bottom`). |
+| `[[machines]]` | The layout: which peer is on each edge (`left`/`right`/`top`/`bottom`). Screen sizes are auto-detected; add `screen = [w, h]` only to override. |
 
 ---
 
@@ -156,7 +155,7 @@ find the server automatically over mDNS — running `connect` with no
 | `handshake/auth failed` | The `psk` isn't identical on both machines. |
 | Client can't connect | Same Wi‑Fi? Firewall allowed on Windows? Correct `server_host` IP? Try `shareclick discover`. |
 | `name ... is not present` | `name` must match a `[[machines]]` entry. |
-| Nothing happens at the edge | Check the layout edges (`right`/`left`) and that `auto_edge_switch = true`. F12 always works as a fallback. |
+| Nothing happens at the edge | Check the layout edges (`right`/`left`) and that `auto_edge_switch = true`. **Hold both Shift keys** to toggle control from the keyboard (reliable escape). |
 | Windows: no tray icon after launching | New icons hide under the **"^" (show hidden icons)** arrow by the clock — drag ShareClick onto the taskbar. For a first test you can skip the tray entirely and run `shareclick.exe connect` from PowerShell. |
 
 Still stuck? Open an issue with the terminal output from both machines:

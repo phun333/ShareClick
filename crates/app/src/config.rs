@@ -37,8 +37,10 @@ pub struct Config {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Machine {
     pub name: String,
-    /// Screen size in pixels, used to map edge-crossing positions.
-    pub screen: (u32, u32),
+    /// Screen size in pixels. Optional — auto-detected at runtime if omitted.
+    /// Set it only to override a wrong auto-detection.
+    #[serde(default)]
+    pub screen: Option<(u32, u32)>,
     /// Neighbour machine names by edge (any may be absent).
     #[serde(default)]
     pub left: Option<String>,
@@ -101,7 +103,7 @@ impl Config {
             machines: vec![
                 Machine {
                     name: "mac".into(),
-                    screen: (2560, 1440),
+                    screen: None,
                     left: None,
                     right: Some("windows".into()),
                     top: None,
@@ -109,7 +111,7 @@ impl Config {
                 },
                 Machine {
                     name: "windows".into(),
-                    screen: (1920, 1080),
+                    screen: None,
                     left: Some("mac".into()),
                     right: None,
                     top: None,

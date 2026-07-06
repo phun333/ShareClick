@@ -9,6 +9,16 @@ use shareclick_protocol::{InputEvent, MouseButton};
 
 use crate::keymap;
 
+/// Query the main display size (width, height) in the OS coordinate space.
+pub fn main_display_size() -> anyhow::Result<(u32, u32)> {
+    let enigo = Enigo::new(&Settings::default())
+        .map_err(|e| anyhow::anyhow!("failed to init display query: {e:?}"))?;
+    let (w, h) = enigo
+        .main_display()
+        .map_err(|e| anyhow::anyhow!("main_display: {e:?}"))?;
+    Ok((w.max(1) as u32, h.max(1) as u32))
+}
+
 pub struct Injector {
     enigo: Enigo,
 }

@@ -54,6 +54,15 @@ fn load_config() -> anyhow::Result<Config> {
     Config::load(&path)
 }
 
+/// This machine's screen size: a config override if set, else auto-detected
+/// from the OS, else a safe fallback.
+fn screen_size(cfg: &Config) -> (u32, u32) {
+    if let Some(s) = cfg.machine(&cfg.name).and_then(|m| m.screen) {
+        return s;
+    }
+    crate::emit::main_display_size().unwrap_or((1920, 1080))
+}
+
 fn resolve(addr: &str) -> anyhow::Result<SocketAddr> {
     addr.to_socket_addrs()?
         .next()
@@ -166,16 +175,15 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
     tracing::info!(%bind_addr, name = %cfg.name, "serving; press F12 to hand control to the client");
     tracing::info!("grant Accessibility permission on macOS for capture to work");
 
+    // Screen size: auto-detected from the OS, or a config override if present.
+    let (sw, sh) = screen_size(&cfg);
+    tracing::info!(width = sw, height = sh, "screen size (auto-detected)");
+
     // Monitor manager: which of our screen edges border another machine?
     let edges = match cfg.machine(&cfg.name) {
-        Some(m) if cfg.auto_edge_switch => EdgeConfig::new(
-            m.screen.0,
-            m.screen.1,
-            m.left.is_some(),
-            m.right.is_some(),
-            m.top.is_some(),
-            m.bottom.is_some(),
-        ),
+        Some(m) if cfg.auto_edge_switch => {
+            EdgeConfig::new(sw, sh, m.left.is_some(), m.right.is_some(), m.top.is_some(), m.bottom.is_some())
+        }
         _ => EdgeConfig::none(),
     };
 
@@ -261,10 +269,8 @@ pub fn connect(server: Option<&str>) -> anyhow::Result<()> {
     let mut injector = crate::emit::Injector::new()?;
 
     // Track our cursor so we can auto-return control at the border edge.
-    let (cw, ch) = cfg
-        .machine(&cfg.name)
-        .map(|m| m.screen)
-        .unwrap_or((1920, 1080));
+    let (cw, ch) = screen_size(&cfg);
+    tracing::info!(width = cw, height = ch, "screen size (auto-detected)");
     let mut tracker = CursorTracker::new(cw, ch);
     let mut controlling = false;
 
