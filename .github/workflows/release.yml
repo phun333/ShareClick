@@ -77,10 +77,18 @@ jobs:
 
             **Download & install — no Rust required:**
             * **macOS:** `ShareClick-*.dmg` → open, drag ShareClick to Applications.
-              On first launch grant **Accessibility** + **Input Monitoring**
-              (System Settings → Privacy & Security). Unsigned build: if blocked,
-              right-click the app → **Open**.
+              Then grant **Accessibility** + **Input Monitoring**.
             * **Windows:** `ShareClick-Setup-*.exe` → run it (no admin needed).
 
+            ⚠️ **These builds are unsigned** (no paid certificate), so you'll see a
+            one-time OS warning — normal for open-source apps.
+            * **macOS** "app is damaged / can't be opened": open Terminal and run
+              `xattr -cr /Applications/ShareClick.app`, then launch it. (Or
+              right-click the app → Open, or System Settings → Privacy & Security
+              → Open Anyway.)
+            * **Windows** SmartScreen: **More info → Run anyway**.
+
+            👉 Full step-by-step: https://github.com/phun333/ShareClick/blob/main/docs/INSTALL.md
+
             Then click the menu-bar / tray icon → **Settings** to set your shared
-            passphrase and screen layout. See the README for details.
+            passphrase and screen layout.

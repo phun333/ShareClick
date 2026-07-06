@@ -12,11 +12,14 @@ first.
 Grab the installer for your OS from the
 [**Releases**](https://github.com/phun333/ShareClick/releases) page:
 
-- **macOS:** `ShareClick-*.dmg` → open, drag **ShareClick** to Applications. On
-  first launch grant **Accessibility** + **Input Monitoring** (System Settings →
-  Privacy & Security). Unsigned build: if blocked, right-click the app → **Open**.
-- **Windows:** `ShareClick-Setup-*.exe` → run it (no admin needed). If SmartScreen
-  warns, **More info → Run anyway**.
+- **macOS:** `ShareClick-*.dmg` → open, drag **ShareClick** to Applications, then
+  grant **Accessibility** + **Input Monitoring**.
+- **Windows:** `ShareClick-Setup-*.exe` → run it (no admin needed).
+
+> ⚠️ **The builds are unsigned** (no paid Apple/Microsoft certificate), so your
+> OS shows a one-time warning. This is normal for open-source apps and easy to
+> get past — **[full step-by-step in docs/INSTALL.md](./docs/INSTALL.md)**.
+> macOS quick fix if it says "damaged": `xattr -cr /Applications/ShareClick.app`.
 
 Then click the menu-bar / tray icon → **Settings & Monitor Manager** to set a
 shared passphrase (same on both machines) and your screen layout. Building from
