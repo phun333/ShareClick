@@ -12,7 +12,7 @@
 #![cfg(feature = "native")]
 
 use std::net::{SocketAddr, TcpListener, TcpStream, ToSocketAddrs};
-use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
 use std::sync::mpsc::{self, Receiver};
 use std::sync::Arc;
 use std::time::Duration;
@@ -24,6 +24,8 @@ use crate::bulk::BulkConn;
 use crate::capture;
 use crate::clipboard;
 use crate::config::Config;
+use crate::control::Control;
+use crate::cursor::CursorTracker;
 use crate::edge::EdgeConfig;
 use crate::filexfer::FileReceiver;
 use crate::transport::InputChannel;
@@ -88,8 +90,13 @@ fn serve_bulk(conn: BulkConn) -> anyhow::Result<()> {
 /// The server's encrypted input pump: learn the client's UDP address from its
 /// pings, then stream coalesced, encrypted input batches while control is held
 /// by the client. Returns on socket error (peer likely gone).
-fn run_server_input(udp: &InputChannel, rx: &Receiver<InputEvent>) -> anyhow::Result<()> {
+fn run_server_input(
+    udp: &InputChannel,
+    rx: &Receiver<InputEvent>,
+    control: &Control,
+) -> anyhow::Result<()> {
     let mut peer: Option<SocketAddr> = None;
+    let mut prev_active = false;
     let mut buf = [0u8; 2048];
     loop {
         if let Ok(Some((pkt, from))) = udp.recv(&mut buf) {
@@ -97,9 +104,31 @@ fn run_server_input(udp: &InputChannel, rx: &Receiver<InputEvent>) -> anyhow::Re
                 tracing::info!(%from, "client input channel online");
                 peer = Some(from);
             }
-            if let InputMsg::Ping { nonce, echo_nanos } = pkt.msg {
-                let _ = udp.send_to(InputMsg::Pong { nonce, echo_nanos }, from);
+            match pkt.msg {
+                InputMsg::Ping { nonce, echo_nanos } => {
+                    let _ = udp.send_to(InputMsg::Pong { nonce, echo_nanos }, from);
+                }
+                // Client's cursor crossed back over the border → reclaim.
+                InputMsg::Leave => {
+                    control.active.store(false, Ordering::Relaxed);
+                    tracing::info!("client returned control");
+                }
+                _ => {}
             }
+        }
+
+        // Announce control transitions to the client.
+        let active = control.active.load(Ordering::Relaxed);
+        if active != prev_active {
+            if let Some(p) = peer {
+                if active {
+                    let (edge, entry) = *control.entry.lock().unwrap();
+                    let _ = udp.send_to(InputMsg::Enter { edge, entry }, p);
+                } else {
+                    let _ = udp.send_to(InputMsg::Leave, p);
+                }
+            }
+            prev_active = active;
         }
 
         let mut batch = Vec::new();
@@ -139,10 +168,10 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
 
     // Capture runs once, globally, feeding a channel. Control starts local.
     let (tx, rx) = mpsc::channel();
-    let active = Arc::new(AtomicBool::new(false));
-    let active_cap = active.clone();
+    let control = Arc::new(Control::new());
+    let control_cap = control.clone();
     std::thread::spawn(move || {
-        if let Err(e) = capture::run(tx, active_cap, edges) {
+        if let Err(e) = capture::run(tx, control_cap, edges) {
             tracing::error!(error = %e, "capture thread stopped");
         }
     });
@@ -168,7 +197,7 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
         // Encrypted UDP input channel for this session.
         let udp = InputChannel::bind(bind_addr, None)?.with_cipher(Arc::new(input_sess));
         udp.set_read_timeout(Some(Duration::from_millis(1)))?;
-        if let Err(e) = run_server_input(&udp, &rx) {
+        if let Err(e) = run_server_input(&udp, &rx, &control) {
             tracing::warn!(error = %e, "input session ended; awaiting new client");
         }
     }
@@ -200,6 +229,14 @@ pub fn connect(server: &str) -> anyhow::Result<()> {
     channel.set_read_timeout(Some(Duration::from_millis(200)))?;
     let mut injector = crate::emit::Injector::new()?;
 
+    // Track our cursor so we can auto-return control at the border edge.
+    let (cw, ch) = cfg
+        .machine(&cfg.name)
+        .map(|m| m.screen)
+        .unwrap_or((1920, 1080));
+    let mut tracker = CursorTracker::new(cw, ch);
+    let mut controlling = false;
+
     // Announce ourselves; re-ping on timeout to keep the path warm.
     channel.send(InputMsg::Ping { nonce: 0, echo_nanos: 0 })?;
 
@@ -207,8 +244,26 @@ pub fn connect(server: &str) -> anyhow::Result<()> {
     loop {
         match channel.recv(&mut buf) {
             Ok(Some((pkt, _))) => match pkt.msg {
+                InputMsg::Enter { edge, entry } => {
+                    tracker.enter(edge, entry);
+                    controlling = true;
+                    tracing::info!(?edge, "gained control from server");
+                }
+                InputMsg::Leave => {
+                    tracker.leave();
+                    controlling = false;
+                    tracing::info!("server revoked control");
+                }
                 InputMsg::Events(events) => {
                     for ev in events {
+                        if let InputEvent::MouseMove { dx, dy } = ev {
+                            if controlling && tracker.moved(dx, dy) {
+                                // Cursor left back toward the server → return it.
+                                controlling = false;
+                                let _ = channel.send(InputMsg::Leave);
+                                tracing::info!("cursor hit border; returning control");
+                            }
+                        }
                         if let Err(e) = injector.apply(ev) {
                             tracing::warn!(error = %e, "inject failed");
                         }

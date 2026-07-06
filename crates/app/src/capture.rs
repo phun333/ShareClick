@@ -13,13 +13,14 @@
 
 #![cfg(feature = "native")]
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::Ordering;
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 
 use rdev::{Event, EventType};
-use shareclick_protocol::{InputEvent, MouseButton};
+use shareclick_protocol::{Edge, InputEvent, MouseButton};
 
+use crate::control::Control;
 use crate::edge::EdgeConfig;
 use crate::keymap;
 
@@ -31,7 +32,7 @@ pub const TOGGLE_KEY: rdev::Key = rdev::Key::F12;
 ///
 /// `edges` enables automatic hand-off: when control is local and the cursor
 /// reaches a bordered screen edge, control flips to the client automatically.
-pub fn run(tx: Sender<InputEvent>, active: Arc<AtomicBool>, edges: EdgeConfig) -> anyhow::Result<()> {
+pub fn run(tx: Sender<InputEvent>, control: Arc<Control>, edges: EdgeConfig) -> anyhow::Result<()> {
     // grab's callback is `Fn` (not `FnMut`) so mutable state lives behind locks.
     let last_pos: Mutex<Option<(f64, f64)>> = Mutex::new(None);
 
@@ -39,25 +40,35 @@ pub fn run(tx: Sender<InputEvent>, active: Arc<AtomicBool>, edges: EdgeConfig) -
         // Toggle hotkey: always consumed, never forwarded.
         if let EventType::KeyPress(k) = event.event_type {
             if k == TOGGLE_KEY {
-                let now = !active.load(Ordering::Relaxed);
-                active.store(now, Ordering::Relaxed);
+                let now = !control.active.load(Ordering::Relaxed);
+                if now {
+                    *control.entry.lock().unwrap() = (Edge::Left, 0.5);
+                }
+                control.active.store(now, Ordering::Relaxed);
                 tracing::info!(active = now, "control toggled");
                 return None;
             }
         }
 
         // Automatic edge hand-off: while control is local, a cursor touching a
-        // bordered edge switches control to the client.
-        if !active.load(Ordering::Relaxed) {
+        // bordered edge switches control to the client. Record where it left so
+        // the client can enter at the matching spot.
+        if !control.active.load(Ordering::Relaxed) {
             if let EventType::MouseMove { x, y } = event.event_type {
-                if let Some(edge) = edges.hit(x.round() as i32, y.round() as i32) {
-                    active.store(true, Ordering::Relaxed);
+                let (xi, yi) = (x.round() as i32, y.round() as i32);
+                if let Some(edge) = edges.hit(xi, yi) {
+                    let frac = match edge {
+                        Edge::Left | Edge::Right => y as f32 / edges.height.max(1) as f32,
+                        Edge::Top | Edge::Bottom => x as f32 / edges.width.max(1) as f32,
+                    };
+                    *control.entry.lock().unwrap() = (edge, frac);
+                    control.active.store(true, Ordering::Relaxed);
                     tracing::info!(?edge, "cursor crossed edge; control handed to client");
                 }
             }
         }
 
-        let is_active = active.load(Ordering::Relaxed);
+        let is_active = control.active.load(Ordering::Relaxed);
 
         let mapped = match event.event_type {
             EventType::MouseMove { x, y } => {
