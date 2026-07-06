@@ -25,6 +25,7 @@ use crate::capture;
 use crate::clipboard;
 use crate::config::Config;
 use crate::control::Control;
+use crate::discovery;
 use crate::cursor::CursorTracker;
 use crate::edge::EdgeConfig;
 use crate::filexfer::FileReceiver;
@@ -176,6 +177,12 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
         }
     });
 
+    // Advertise over mDNS so clients can find us without an IP (kept alive for
+    // the process lifetime).
+    let _advert = discovery::advertise(&cfg.name, bind_addr.port())
+        .map_err(|e| tracing::warn!(error = %e, "mDNS advertise failed"))
+        .ok();
+
     let listener = TcpListener::bind(bind_addr)?;
     loop {
         let (stream, _) = listener.accept()?;
@@ -208,18 +215,18 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
 pub fn connect(server: Option<&str>) -> anyhow::Result<()> {
     let cfg = load_config()?;
     let psk = cfg.psk.clone().into_bytes();
-    let host = match server {
-        Some(s) => s.to_string(),
-        None => cfg.server_host.clone().ok_or_else(|| {
-            anyhow::anyhow!("no server given: pass a host or set `server_host` in the config")
-        })?,
+    let with_port = |h: &str| -> String {
+        if h.contains(':') { h.to_string() } else { format!("{h}:{}", cfg.port) }
     };
-    let addr_str = if host.contains(':') {
-        host
-    } else {
-        format!("{host}:{}", cfg.port)
+    let server_addr = match server.map(|s| s.to_string()).or_else(|| cfg.server_host.clone()) {
+        Some(host) => resolve(&with_port(&host))?,
+        None => {
+            tracing::info!("no server configured; searching via mDNS (3s)…");
+            discovery::discover(Duration::from_secs(3))?.ok_or_else(|| {
+                anyhow::anyhow!("no server found via mDNS; pass a host or set `server_host`")
+            })?
+        }
     };
-    let server_addr = resolve(&addr_str)?;
     tracing::info!(%server_addr, name = %cfg.name, "connecting; grant Accessibility permission on macOS");
 
     // Handshake over TCP first, then key both channels from it.

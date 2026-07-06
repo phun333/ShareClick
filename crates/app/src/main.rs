@@ -21,6 +21,8 @@ mod emit;
 #[cfg(feature = "native")]
 mod keymap;
 #[cfg(feature = "native")]
+mod discovery;
+#[cfg(feature = "native")]
 mod run;
 #[cfg(feature = "tray")]
 mod tray;
@@ -72,6 +74,8 @@ enum Command {
     },
     /// Launch the menu-bar (macOS) / system-tray (Windows) app.
     Tray,
+    /// Discover ShareClick servers on the local network via mDNS.
+    Discover,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -93,6 +97,20 @@ fn main() -> anyhow::Result<()> {
         Command::Serve { .. } | Command::Connect { .. } => {
             anyhow::bail!("serve/connect require the `native` feature (build without --no-default-features)")
         }
+        #[cfg(feature = "native")]
+        Command::Discover => {
+            let found = discovery::list(std::time::Duration::from_secs(3))?;
+            if found.is_empty() {
+                println!("no ShareClick servers found on the local network");
+            } else {
+                for (name, addr) in found {
+                    println!("{name}  ->  {addr}");
+                }
+            }
+            Ok(())
+        }
+        #[cfg(not(feature = "native"))]
+        Command::Discover => anyhow::bail!("discover requires the `native` feature"),
         #[cfg(feature = "tray")]
         Command::Tray => tray::run(),
         #[cfg(not(feature = "tray"))]
