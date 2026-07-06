@@ -1,0 +1,12 @@
+/Users/ali/Documents/GitHub/ShareClick/target/release/deps/cocoa-fb8e22c6ac634920.d: /Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/lib.rs /Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/appkit.rs /Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/base.rs /Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/foundation.rs /Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/quartzcore.rs /Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/macros.rs
+
+/Users/ali/Documents/GitHub/ShareClick/target/release/deps/libcocoa-fb8e22c6ac634920.rlib: /Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/lib.rs /Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/appkit.rs /Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/base.rs /Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/foundation.rs /Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/quartzcore.rs /Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/macros.rs
+
+/Users/ali/Documents/GitHub/ShareClick/target/release/deps/libcocoa-fb8e22c6ac634920.rmeta: /Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/lib.rs /Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/appkit.rs /Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/base.rs /Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/foundation.rs /Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/quartzcore.rs /Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/macros.rs
+
+/Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/lib.rs:
+/Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/appkit.rs:
+/Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/base.rs:
+/Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/foundation.rs:
+/Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/quartzcore.rs:
+/Users/ali/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cocoa-0.22.0/src/macros.rs:

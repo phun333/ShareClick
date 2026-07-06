@@ -7,7 +7,11 @@ mod bench;
 mod transport;
 
 #[cfg(feature = "native")]
+mod bulk;
+#[cfg(feature = "native")]
 mod capture;
+#[cfg(feature = "native")]
+mod clipboard;
 #[cfg(feature = "native")]
 mod emit;
 #[cfg(feature = "native")]

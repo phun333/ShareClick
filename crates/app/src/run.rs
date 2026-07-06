@@ -3,15 +3,52 @@
 
 #![cfg(feature = "native")]
 
-use std::net::{SocketAddr, ToSocketAddrs};
+use std::net::{SocketAddr, TcpListener, TcpStream, ToSocketAddrs};
 use std::sync::mpsc;
 use std::time::Duration;
 
-use shareclick_protocol::InputMsg;
+use shareclick_protocol::{BulkMsg, ClipboardData, InputMsg};
 
+use crate::bulk::BulkConn;
 use crate::capture;
+use crate::clipboard;
 use crate::emit::Injector;
 use crate::transport::InputChannel;
+
+/// Wire clipboard (and later file) sync onto one bulk connection. Blocks on the
+/// reader loop and returns when the peer disconnects; spawns writer/watch/apply
+/// helpers alongside.
+fn serve_bulk(conn: BulkConn) -> anyhow::Result<()> {
+    let last = clipboard::shared_last();
+    let (out_tx, out_rx) = mpsc::channel::<BulkMsg>();
+    let (in_tx, in_rx) = mpsc::channel::<ClipboardData>();
+
+    // Writer: drains outbound messages onto the socket.
+    let mut wconn = conn.try_clone()?;
+    std::thread::spawn(move || {
+        while let Ok(msg) = out_rx.recv() {
+            if wconn.send(&msg).is_err() {
+                break;
+            }
+        }
+    });
+    // Apply + watch clipboard.
+    let last_apply = last.clone();
+    std::thread::spawn(move || clipboard::apply(in_rx, last_apply));
+    std::thread::spawn(move || clipboard::watch(out_tx, last));
+
+    // Reader loop (this thread) routes inbound messages.
+    let mut rconn = conn;
+    loop {
+        match rconn.recv() {
+            Ok(BulkMsg::Clipboard(data)) => {
+                let _ = in_tx.send(data);
+            }
+            Ok(_) => {} // Hello/Heartbeat/File* handled later
+            Err(_) => return Ok(()), // peer gone
+        }
+    }
+}
 
 /// Server: shares this machine's keyboard & mouse. Learns the client address
 /// from its first heartbeat, then streams coalesced input batches to it.
@@ -23,6 +60,19 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
     let channel = InputChannel::bind(bind_addr, None)?;
     channel.set_read_timeout(Some(Duration::from_millis(1)))?;
     tracing::info!(%bind_addr, "serving input; grant Accessibility permission on macOS");
+
+    // Bulk channel (clipboard/files) on the same port over TCP.
+    if let Ok(listener) = TcpListener::bind(bind_addr) {
+        std::thread::spawn(move || {
+            for stream in listener.incoming().flatten() {
+                if let Ok(conn) = BulkConn::new(stream) {
+                    std::thread::spawn(move || {
+                        let _ = serve_bulk(conn);
+                    });
+                }
+            }
+        });
+    }
 
     // Capture runs on its own thread (rdev::listen blocks).
     let (tx, rx) = mpsc::channel();
@@ -73,6 +123,19 @@ pub fn connect(server: &str) -> anyhow::Result<()> {
     tracing::info!(%server_addr, "connecting; grant Accessibility permission on macOS");
 
     let mut injector = Injector::new()?;
+
+    // Bulk channel (clipboard/files): connect over TCP, auto-reconnect.
+    std::thread::spawn(move || loop {
+        match TcpStream::connect(server_addr) {
+            Ok(stream) => {
+                if let Ok(conn) = BulkConn::new(stream) {
+                    let _ = serve_bulk(conn);
+                }
+            }
+            Err(_) => {}
+        }
+        std::thread::sleep(Duration::from_secs(2));
+    });
 
     // Announce ourselves so the server learns our address, then keep the path
     // warm by re-pinging on every read timeout (below).
