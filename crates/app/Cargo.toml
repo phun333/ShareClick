@@ -1,0 +1,19 @@
+[package]
+name = "shareclick"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+default-run = "shareclick"
+
+[[bin]]
+name = "shareclick"
+path = "src/main.rs"
+
+[dependencies]
+shareclick-protocol = { path = "../protocol" }
+serde.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+clap = { version = "4", features = ["derive"] }

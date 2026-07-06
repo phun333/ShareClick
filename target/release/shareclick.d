@@ -1,0 +1,1 @@
+/Users/ali/Documents/GitHub/ShareClick/target/release/shareclick: /Users/ali/Documents/GitHub/ShareClick/crates/app/src/bench.rs /Users/ali/Documents/GitHub/ShareClick/crates/app/src/main.rs /Users/ali/Documents/GitHub/ShareClick/crates/app/src/transport.rs /Users/ali/Documents/GitHub/ShareClick/crates/protocol/src/lib.rs
