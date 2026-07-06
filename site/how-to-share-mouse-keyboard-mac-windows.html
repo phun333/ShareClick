@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>How to share a mouse &amp; keyboard between Mac and Windows (free)</title>
+<meta name="description" content="Step-by-step: share one mouse and keyboard between your Mac and Windows PC for free with ShareClick — an open-source software KVM. Clipboard and files sync too. No hardware, no cloud." />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<meta name="theme-color" content="#fafafa" />
+<link rel="canonical" href="https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.html" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="ShareClick" />
+<meta property="og:title" content="How to share a mouse &amp; keyboard between Mac and Windows (free)" />
+<meta property="og:description" content="Step-by-step guide to share one mouse and keyboard between Mac and Windows for free with ShareClick. Clipboard and files too." />
+<meta property="og:url" content="https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.html" />
+<meta property="og:image" content="https://phun333.github.io/ShareClick/og.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://phun333.github.io/ShareClick/og.png" />
+<script type="application/ld+json">
+{ "@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+  {"@type":"ListItem","position":1,"name":"ShareClick","item":"https://phun333.github.io/ShareClick/"},
+  {"@type":"ListItem","position":2,"name":"Setup guide","item":"https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.html"}
+]}
+</script>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org","@type":"HowTo",
+  "name":"How to share a mouse and keyboard between Mac and Windows",
+  "description":"Share one keyboard, mouse, clipboard and files between a Mac and a Windows PC for free using ShareClick, an open-source software KVM.",
+  "totalTime":"PT3M",
+  "tool":[{"@type":"HowToTool","name":"ShareClick"}],
+  "step":[
+    {"@type":"HowToStep","position":1,"name":"Install ShareClick on both machines","text":"Download the .dmg on your Mac and the .exe on your Windows PC from the releases page and install them."},
+    {"@type":"HowToStep","position":2,"name":"Set a shared passphrase and layout","text":"Open Settings on both machines, enter the same passphrase, and describe which screen borders which."},
+    {"@type":"HowToStep","position":3,"name":"Grant permissions","text":"On macOS enable Accessibility and Input Monitoring; on Windows allow ShareClick through the firewall."},
+    {"@type":"HowToStep","position":4,"name":"Move your mouse to the edge","text":"Push the cursor into the shared screen edge and your keyboard and mouse control the other machine. The clipboard syncs automatically."}
+  ]
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <a class="home" href="./"><span class="dot"></span> shareclick</a>
+    <nav class="hnav">
+      <a class="icon" href="https://x.com/wiredaddict" aria-label="X (Twitter)"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+      <a class="icon" href="https://github.com/phun333/ShareClick" aria-label="GitHub"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-1.8c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.8 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.5-2.7 5.5-5.3 5.8.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg></a>
+    </nav>
+  </header>
+</div>
+
+<main class="doc">
+  <div class="wrap">
+    <article>
+      <p class="crumb"><a href="./">shareclick</a> / setup guide</p>
+      <h1>How to share a mouse &amp; keyboard between Mac and Windows</h1>
+      <p class="lead">You can control both your Mac and your Windows PC with a single keyboard and
+      mouse — for free, no KVM hardware, no cloud. Here's how with <strong>ShareClick</strong>, an
+      open-source software KVM. It takes about three minutes.</p>
+
+      <h2>1. install on both machines</h2>
+      <p>Download <strong>ShareClick</strong> from the
+      <a href="https://github.com/phun333/ShareClick/releases">releases page</a>: the
+      <strong>.dmg</strong> on your Mac and the <strong>.exe</strong> on your Windows PC. Both launch
+      to the menu-bar (macOS) / system tray (Windows). First-launch blocked? See the
+      <a href="https://github.com/phun333/ShareClick/blob/main/docs/INSTALL.md">install help</a>.</p>
+
+      <h2>2. set one shared passphrase &amp; layout</h2>
+      <p>Open <strong>Settings &amp; Monitor Manager</strong> on both machines. Enter the
+      <strong>same passphrase</strong> (it authenticates and encrypts the connection), then say which
+      machine sits on which screen edge — e.g. the PC is to the right of the Mac.</p>
+
+      <h2>3. grant permissions</h2>
+      <ul>
+        <li><strong>macOS:</strong> System Settings → Privacy &amp; Security → enable
+          <strong>Accessibility</strong> and <strong>Input Monitoring</strong> for ShareClick.</li>
+        <li><strong>Windows:</strong> allow ShareClick through the firewall when prompted.</li>
+      </ul>
+      <p>Both machines must be on the same Wi-Fi / LAN.</p>
+
+      <h2>4. just move your mouse</h2>
+      <p>Slide the cursor into the shared screen edge — your keyboard and mouse now drive the other
+      computer. Push back to return. Copy on one machine and paste on the other; the
+      <strong>clipboard syncs automatically</strong>, and you can send files too.</p>
+
+      <div class="verdict">
+        <p>That's it. One keyboard, one mouse, one clipboard across your Mac and Windows PC —
+        <b>encrypted, low-latency, and free</b>.</p>
+      </div>
+
+      <div class="cta-inline">
+        <a class="btn" href="https://github.com/phun333/ShareClick/releases">Download ShareClick — free</a>
+        <a class="btn ghost" href="./">Back to home</a>
+      </div>
+    </article>
+  </div>
+
+  <footer>
+    <a href="./">shareclick</a> · <a href="vs-synergy.html">vs Synergy</a> ·
+    <a href="vs-sharemouse.html">vs ShareMouse</a> · <a href="vs-barrier.html">vs Barrier</a> ·
+    <a href="https://github.com/phun333/ShareClick">GitHub</a>
+  </footer>
+</main>
+
+</body>
+</html>

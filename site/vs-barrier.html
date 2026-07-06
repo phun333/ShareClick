@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ShareClick vs Barrier — a maintained, encrypted Barrier alternative</title>
+<meta name="description" content="ShareClick vs Barrier compared: Barrier is unmaintained. ShareClick is a modern, actively developed, encrypted software KVM with clipboard images, file transfer and mDNS discovery for Mac and Windows." />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<meta name="theme-color" content="#fafafa" />
+<link rel="canonical" href="https://phun333.github.io/ShareClick/vs-barrier.html" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="ShareClick" />
+<meta property="og:title" content="ShareClick vs Barrier — maintained, encrypted alternative" />
+<meta property="og:description" content="Barrier is unmaintained. ShareClick is an actively developed, encrypted Barrier alternative with file transfer and clipboard images." />
+<meta property="og:url" content="https://phun333.github.io/ShareClick/vs-barrier.html" />
+<meta property="og:image" content="https://phun333.github.io/ShareClick/og.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://phun333.github.io/ShareClick/og.png" />
+<script type="application/ld+json">
+{ "@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+  {"@type":"ListItem","position":1,"name":"ShareClick","item":"https://phun333.github.io/ShareClick/"},
+  {"@type":"ListItem","position":2,"name":"ShareClick vs Barrier","item":"https://phun333.github.io/ShareClick/vs-barrier.html"}
+]}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <a class="home" href="./"><span class="dot"></span> shareclick</a>
+    <nav class="hnav">
+      <a class="icon" href="https://x.com/wiredaddict" aria-label="X (Twitter)"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+      <a class="icon" href="https://github.com/phun333/ShareClick" aria-label="GitHub"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-1.8c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.8 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.5-2.7 5.5-5.3 5.8.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg></a>
+    </nav>
+  </header>
+</div>
+
+<main class="doc">
+  <div class="wrap">
+    <article>
+      <p class="crumb"><a href="./">shareclick</a> / vs Barrier</p>
+      <h1>ShareClick vs Barrier</h1>
+      <p class="lead">Barrier was a great open-source KVM, but it is <strong>no longer
+      maintained</strong>. ShareClick is a modern, actively developed successor — encrypted by
+      default, with clipboard images, file transfer and zero-config discovery.</p>
+
+      <table class="cmp">
+        <colgroup><col class="c1"><col><col></colgroup>
+        <thead><tr><th>Feature</th><th>ShareClick</th><th>Barrier</th></tr></thead>
+        <tbody>
+          <tr><td>Price</td><td class="yes">Free &amp; open source</td><td class="yes">Free &amp; open source</td></tr>
+          <tr><td>Actively maintained</td><td class="win">Yes</td><td>No (archived)</td></tr>
+          <tr><td>Encryption</td><td class="win">On by default (X25519 + ChaCha20)</td><td>Optional SSL (manual setup)</td></tr>
+          <tr><td>Clipboard images</td><td class="yes">Yes</td><td>Text mainly</td></tr>
+          <tr><td>File transfer</td><td class="win">Yes</td><td>No</td></tr>
+          <tr><td>Auto discovery</td><td class="win">mDNS (no IPs)</td><td>Manual IP setup</td></tr>
+          <tr><td>Input transport</td><td class="win">UDP, ~6&nbsp;µs</td><td>TCP</td></tr>
+          <tr><td>Mac &amp; Windows</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+        </tbody>
+      </table>
+
+      <h2>the short version</h2>
+      <div class="verdict">
+        <p><b>Barrier is unmaintained</b> — most users are migrating away. <b>ShareClick</b> gives
+        you the same "one keyboard &amp; mouse" idea, but actively developed, encrypted by default,
+        with file transfer, clipboard images, and mDNS discovery so you never type an IP.</p>
+      </div>
+
+      <p>If you liked Barrier (or Input Leap, its fork) and want something current and secure for
+      Mac↔Windows, ShareClick is a drop-in reason to switch.</p>
+
+      <div class="cta-inline">
+        <a class="btn" href="https://github.com/phun333/ShareClick/releases">Download ShareClick — free</a>
+        <a class="btn ghost" href="how-to-share-mouse-keyboard-mac-windows.html">Setup guide</a>
+      </div>
+    </article>
+  </div>
+
+  <footer>
+    <a href="./">shareclick</a> · <a href="vs-synergy.html">vs Synergy</a> ·
+    <a href="vs-sharemouse.html">vs ShareMouse</a> ·
+    <a href="https://github.com/phun333/ShareClick">GitHub</a> · MIT / Apache-2.0
+  </footer>
+</main>
+
+</body>
+</html>

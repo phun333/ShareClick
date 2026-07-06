@@ -11,6 +11,8 @@
 <meta name="theme-color" content="#fafafa" />
 <link rel="canonical" href="https://phun333.github.io/ShareClick/" />
 <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<!-- Google Search Console verification: paste your token, then uncomment -->
+<!-- <meta name="google-site-verification" content="PASTE_TOKEN_HERE" /> -->
 
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
@@ -83,77 +85,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg:#fafafa; --card:#fff; --ink:#111; --muted:#6b7280;
-    --line:#e7e7e7; --line-strong:#d9d9d9; --accent:#2563eb; --radius:14px;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0;background:var(--bg);color:var(--ink);
-    font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
-    font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;
-    min-height:100vh;display:flex;flex-direction:column;
-  }
-  a{color:var(--accent);text-decoration:none}
-  a:hover{text-decoration:underline}
-  .wrap{width:100%;max-width:920px;margin:0 auto;padding:0 24px}
-  svg{display:block}
-
-  header{display:flex;align-items:center;justify-content:flex-end;padding:24px 0}
-  .hnav{display:flex;align-items:center;gap:18px}
-  header a.icon{color:var(--muted);display:inline-flex}
-  header a.icon:hover{color:var(--ink)}
-  header a.icon svg{width:20px;height:20px}
-  .dot{width:11px;height:11px;border-radius:50%;background:var(--ink)}
-
-  main{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 0}
-  .hero{text-align:center}
-  h1{font-size:clamp(72px,15vw,180px);font-weight:800;letter-spacing:-.045em;line-height:.9;margin:0}
-  .tag{color:var(--muted);font-size:clamp(15px,2.6vw,19px);margin:20px auto 0;max-width:520px}
-  .tag b{color:var(--ink);font-weight:500}
-
-  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:36px 0 0}
-  .btn{display:inline-flex;align-items:center;gap:10px;background:var(--ink);color:#fff;
-    padding:13px 22px;border-radius:11px;font-weight:500;font-size:14px;
-    border:1px solid var(--ink);transition:transform .08s,opacity .15s}
-  .btn:hover{opacity:.9;text-decoration:none;transform:translateY(-1px)}
-  .btn.ghost{background:transparent;color:var(--ink);border-color:var(--line-strong)}
-  .btn svg{width:17px;height:17px}
-  .sub{text-align:center;color:var(--muted);font-size:12.5px;margin:14px 0 0}
-
-  .facts{display:flex;gap:14px;justify-content:center;align-items:center;flex-wrap:wrap;
-    margin:40px 0 0;color:var(--muted);font-size:13px}
-  .facts b{color:var(--ink);font-weight:700}
-  .facts .s{width:1px;height:16px;background:var(--line)}
-  .slider{display:inline-flex;align-items:center}
-  .slider .track{height:4px;width:44px;background:#e5e5e5;border-radius:99px}
-  .slider .knob{width:14px;height:14px;border-radius:50%;background:var(--ink);margin-left:-4px}
-
-  .feat{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);
-    border-radius:var(--radius);overflow:hidden;background:var(--card);margin:56px 0 0}
-  .feat div{padding:20px 22px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);font-size:13.5px}
-  .feat b{display:block;font-weight:700;color:var(--ink);margin-bottom:2px}
-  .feat span{color:var(--muted);font-size:12.5px}
-  .feat div:nth-child(3n){border-right:none}
-  .feat div:nth-last-child(-n+3){border-bottom:none}
-
-  .faq{max-width:640px;margin:60px auto 40px;padding:0 24px}
-  .faq h2{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0 0 10px;text-align:center;color:var(--ink)}
-  .faq details{border-bottom:1px solid var(--line);padding:14px 2px}
-  .faq summary{cursor:pointer;font-weight:500;font-size:14px;list-style:none;display:flex;justify-content:space-between;gap:12px;color:var(--ink)}
-  .faq summary::-webkit-details-marker{display:none}
-  .faq summary::after{content:"+";color:var(--muted)}
-  .faq details[open] summary::after{content:"\2212"}
-  .faq p{margin:10px 0 2px;color:var(--muted);font-size:13.5px}
-
-  @media(max-width:680px){
-    .feat{grid-template-columns:1fr}
-    .feat div{border-right:none}
-    .feat div:nth-last-child(-n+3){border-bottom:1px solid var(--line)}
-    .feat div:last-child{border-bottom:none}
-  }
-</style>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.webmanifest">
 </head>
 <body>
 
@@ -231,6 +164,15 @@
     <p>LAN-only, no cloud. every channel is end-to-end encrypted with X25519 + ChaCha20-Poly1305, authenticated by a shared passphrase.</p>
   </details>
 </section>
+
+<div class="wrap">
+  <p class="compare">compare:
+    <a href="vs-synergy.html">vs Synergy</a> ·
+    <a href="vs-sharemouse.html">vs ShareMouse</a> ·
+    <a href="vs-barrier.html">vs Barrier</a> ·
+    <a href="how-to-share-mouse-keyboard-mac-windows.html">setup guide</a>
+  </p>
+</div>
 
 <script>
   (function(){

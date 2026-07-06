@@ -1,0 +1,13 @@
+{
+  "name": "ShareClick",
+  "short_name": "ShareClick",
+  "description": "Free open-source software KVM: share one keyboard, mouse, clipboard and files between Mac and Windows.",
+  "start_url": "/ShareClick/",
+  "scope": "/ShareClick/",
+  "display": "browser",
+  "background_color": "#fafafa",
+  "theme_color": "#fafafa",
+  "icons": [
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
