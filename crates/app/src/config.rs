@@ -25,6 +25,10 @@ pub struct Config {
     /// a neighbour (in addition to the F12 hotkey).
     #[serde(default = "default_true")]
     pub auto_edge_switch: bool,
+    /// For a client: the server's host (or `host:port`) to connect to. Lets
+    /// `connect` and the tray "Start Client" run without a CLI argument.
+    #[serde(default)]
+    pub server_host: Option<String>,
     /// The machines participating and their geometry/neighbours.
     pub machines: Vec<Machine>,
 }
@@ -93,6 +97,7 @@ impl Config {
             psk: "change-me-to-a-long-random-passphrase".into(),
             port: default_port(),
             auto_edge_switch: true,
+            server_host: Some("192.168.1.20".into()),
             machines: vec![
                 Machine {
                     name: "mac".into(),

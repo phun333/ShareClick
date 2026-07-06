@@ -128,24 +128,12 @@ fn spawn_serve() {
     });
 }
 
-/// Start the client. The server host is taken from the first *other* machine in
-/// the layout; the user can refine this in settings.
+/// Start the client, dialing the `server_host` from the config.
 fn spawn_connect() {
     std::thread::spawn(|| {
-        let cfg = match Config::load(&Config::default_path()) {
-            Ok(c) => c,
-            Err(e) => {
-                eprintln!("no usable config: {e}");
-                return;
-            }
-        };
-        // Pick the first machine that isn't us as the server to dial.
-        let peer = cfg.machines.iter().find(|m| m.name != cfg.name);
-        match peer {
-            Some(_m) => {
-                eprintln!("set the server host in settings, then use `shareclick connect <host>`");
-            }
-            None => eprintln!("add a peer machine in settings first"),
+        // `connect(None)` reads `server_host` from the config itself.
+        if let Err(e) = crate::run::connect(None) {
+            eprintln!("client error: {e} (set `server_host` in Settings)");
         }
     });
 }

@@ -203,11 +203,23 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
     }
 }
 
-/// Client: receives input batches and injects them locally.
-pub fn connect(server: &str) -> anyhow::Result<()> {
+/// Client: receives input batches and injects them locally. `server` overrides
+/// the config's `server_host`; either may omit the port (config `port` used).
+pub fn connect(server: Option<&str>) -> anyhow::Result<()> {
     let cfg = load_config()?;
     let psk = cfg.psk.clone().into_bytes();
-    let server_addr = resolve(server)?;
+    let host = match server {
+        Some(s) => s.to_string(),
+        None => cfg.server_host.clone().ok_or_else(|| {
+            anyhow::anyhow!("no server given: pass a host or set `server_host` in the config")
+        })?,
+    };
+    let addr_str = if host.contains(':') {
+        host
+    } else {
+        format!("{host}:{}", cfg.port)
+    };
+    let server_addr = resolve(&addr_str)?;
     tracing::info!(%server_addr, name = %cfg.name, "connecting; grant Accessibility permission on macOS");
 
     // Handshake over TCP first, then key both channels from it.

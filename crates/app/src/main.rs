@@ -53,8 +53,9 @@ enum Command {
     },
     /// Connect to a server as a client (receives input, injects it locally).
     Connect {
-        /// Server address, e.g. 192.168.1.20:24800
-        server: String,
+        /// Server address, e.g. 192.168.1.20:24800. Omit to use `server_host`
+        /// from the config.
+        server: Option<String>,
     },
     /// Send a file to a listening peer's bulk channel.
     SendFile {
@@ -87,7 +88,7 @@ fn main() -> anyhow::Result<()> {
         #[cfg(feature = "native")]
         Command::Serve { bind } => run::serve(&bind),
         #[cfg(feature = "native")]
-        Command::Connect { server } => run::connect(&server),
+        Command::Connect { server } => run::connect(server.as_deref()),
         #[cfg(not(feature = "native"))]
         Command::Serve { .. } | Command::Connect { .. } => {
             anyhow::bail!("serve/connect require the `native` feature (build without --no-default-features)")
