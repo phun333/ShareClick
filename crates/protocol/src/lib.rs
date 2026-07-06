@@ -126,8 +126,9 @@ pub enum BulkMsg {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ClipboardData {
     Text(String),
-    /// Raw image bytes plus a MIME hint (e.g. "image/png").
-    Image { mime: String, bytes: Vec<u8> },
+    /// Raw RGBA image (8 bits per channel), matching what the OS clipboard
+    /// APIs hand us — no image codec needed on either end.
+    Image { width: u32, height: u32, rgba: Vec<u8> },
 }
 
 /// Errors from (de)serialization.
