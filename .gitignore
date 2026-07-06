@@ -59,3 +59,8 @@ dist-site/
 *.log
 *.tmp
 *.bak
+
+# Vendored marketing skill packs (reinstall via: npx skills add ...).
+# Keep the product-marketing context tracked, ignore the bulky vendored skills.
+.agents/*
+!.agents/product-marketing.md
