@@ -49,3 +49,9 @@
 - enigo `Insert` key missing on macOS → currently dropped; revisit with raw keycodes.
 - Windows keymap: verify rdev `Key` coverage for non-US layouts; may need scancode-based path.
 - Wayland: enigo/rdev experimental; document X11-first for Linux like the rest of the ecosystem.
+
+## Known issue: macOS local-cursor suppression (server)
+- rdev `grab` on macOS does NOT suppress mouse-move even when the callback returns None, so while the client has control the Mac cursor also moves (mirrors instead of switching). Keyboard/clicks may suppress; mouse-move does not.
+- Tried warp-to-anchor + CGAssociateMouseAndMouseCursorPosition(true): broke forwarding (likely the ~250ms post-warp event-suppression deadzone). Reverted.
+- Proper fix: replace rdev mouse capture on macOS with a custom CGEventTap that (a) reads raw kCGMouseEventDeltaX/Y (relative deltas, valid even when the cursor is frozen), and (b) uses CGAssociateMouseAndMouseCursorPosition(false) to freeze the cursor + CGDisplayHideCursor to hide it. This is the standard remote-desktop/game capture technique. Keyboard can stay on rdev.
+- Windows: rdev grab returning 1 (None) DOES suppress there, so Windows-as-server should switch correctly already.
