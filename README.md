@@ -91,8 +91,12 @@ cargo build --release
 #   → press F12 to hand control to the client; F12 again to reclaim it.
 #     While the client has control, local input on the server is suppressed.
 
-# On the other machine:
+# On the other machine (explicit host):
 ./target/release/shareclick connect 192.168.1.20:24800
+#   … or omit the host to auto-discover the server over mDNS:
+./target/release/shareclick connect
+#   … or list servers on the network:
+./target/release/shareclick discover
 
 # Send a file to a peer (clipboard syncs automatically once connected):
 ./target/release/shareclick send-file 192.168.1.20:24800 ./report.pdf
@@ -146,10 +150,12 @@ cargo build --release -p shareclick --no-default-features
       (measured ~20 ns extra latency — see the encrypted benchmark)
 - [x] Settings + monitor manager (`config.toml`)
 - [x] Automatic edge-switching (cursor crosses a bordered screen edge)
+- [x] Client-side return-edge detection (auto reclaim, no F12 either way)
 - [x] Menu-bar (macOS) / system-tray (Windows) app (`--features tray`)
-- [ ] Client-side return-edge detection (auto reclaim without F12)
-- [ ] Clipboard images
-- [ ] mDNS auto-discovery
+- [x] Clipboard images (raw RGBA)
+- [x] mDNS auto-discovery (`_shareclick._udp`)
+- [ ] Packaging (.app / .msi) & GUI settings editor
+- [ ] Multiple simultaneous clients
 - [ ] Multi-monitor / multi-client layouts
 - [ ] Auto-discovery (mDNS) so you don't type IPs
 - [ ] Tray app / GUI

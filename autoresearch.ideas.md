@@ -24,13 +24,18 @@
 - [x] Automatic edge-switching (server->client) via neighbour graph
 - [x] macOS menu-bar / Windows tray UI (tray-icon + tao, `tray` feature)
 
-## Next up (polish)
-- **Client-side return edge:** client tracks injected cursor position from relative deltas + its screen size; when it hits the return edge, send InputMsg::Leave so the server flips control back automatically (today F12 reclaims). Enter/Leave already exist in the protocol.
-- **Tray Start Client:** needs a `server_host` setting; wire the menu action to actually dial it.
-- **Clipboard images:** ClipboardData::Image already in protocol; add arboard image get/set.
-- **mDNS discovery:** advertise `_shareclick._udp` so peers find each other without typing IPs.
-- **serve multi-client / reconnect:** currently one session at a time; make the UDP cipher swappable (arc-swap) so capture can keep running across reconnects.
+## DONE (polish pass)
+- [x] Client-side return edge (CursorTracker + Enter/Leave signalling; auto reclaim both directions)
+- [x] Config `server_host` + zero-arg client + tray Start Client wired
+- [x] Clipboard images (raw RGBA via arboard; unified fingerprint echo-suppression)
+- [x] mDNS discovery (advertise + browse + `discover` CLI; PSK still authenticates)
+
+## Next up (future / optional)
+- **serve multi-client / reconnect:** currently one session at a time; make the UDP cipher swappable (arc-swap) so capture can keep running across reconnects and fan out to multiple clients.
 - **Progress + backpressure** for large file transfers; zero-copy sendfile later.
+- **Packaging:** macOS `.app` bundle (so Accessibility grant sticks) + Windows `.msi`; auto-launch at login.
+- **GUI settings editor** in the tray instead of opening the TOML by hand.
+- **Real end-to-end lag measurement** vs ShareMouse/Deskflow (photodiode / high-speed camera) to substantiate the "lowest lag" claim.
 
 ## Latency optimization ideas (measure with `shareclick bench`)
 - Try QUIC for the bulk channel only (keep UDP raw for input) — encryption + reliability without HOL-blocking input.
