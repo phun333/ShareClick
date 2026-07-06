@@ -1,11 +1,61 @@
-# Rust build artifacts
+# ── Rust / Cargo ────────────────────────────────────────────────
 /target/
+**/target/
 **/*.rs.bk
+*.pdb
+# NOTE: Cargo.lock is intentionally committed — ShareClick is an
+# application (binary), so we pin exact dependency versions.
 
-# Packaging output
+# ── Packaging output ────────────────────────────────────────────
 /dist/
 packaging/windows/Output/
 *.dmg
+*.pkg
+*.msi
 
-# OS junk
+# ── Secrets / config ────────────────────────────────────────────
+# The runtime config holds the pre-shared key; never commit any copy.
+*.env
+.env
+.env.*
+config.local.toml
+
+# ── Editors / IDEs ──────────────────────────────────────────────
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+.\#*
+\#*\#
+
+# ── macOS ───────────────────────────────────────────────────────
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+
+# ── Windows ─────────────────────────────────────────────────────
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ── Linux ───────────────────────────────────────────────────────
+.directory
+.Trash-*
+
+# ── Web (site/, if tooling is added later) ──────────────────────
+node_modules/
+dist-site/
+.cache/
+
+# ── Misc ────────────────────────────────────────────────────────
+*.log
+*.tmp
+*.bak
