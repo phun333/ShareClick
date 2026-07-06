@@ -43,8 +43,17 @@ these naturally — **never keyword-stuff**; Google punishes it.
 - ✅ Open Graph + Twitter Card + `og.png` (1200×630) → rich link previews when
   shared anywhere.
 - ✅ `canonical`, `robots`, `sitemap.xml`, `robots.txt`, `favicon.svg`.
-- ✅ Fast, single static file, mobile-responsive, HTTPS via GitHub Pages → strong
-  Core Web Vitals (a real ranking factor).
+- ✅ Fast static pages, mobile-responsive, HTTPS via GitHub Pages → strong Core
+  Web Vitals (a real ranking factor).
+- ✅ **Comparison pages** (`vs-synergy.html`, `vs-sharemouse.html`,
+  `vs-barrier.html`) with fair comparison tables + `BreadcrumbList` schema →
+  intercept high-intent "X alternative / vs X" searches.
+- ✅ **Setup guide** (`how-to-share-mouse-keyboard-mac-windows.html`) with `HowTo`
+  schema → targets the primary "how to share mouse & keyboard mac windows" query.
+- ✅ Internal linking (home ↔ comparisons ↔ guide), shared `style.css`,
+  `manifest.webmanifest`, branded `404.html`, expanded `sitemap.xml`.
+- ✅ Google Search Console verification `<meta>` placeholder in `index.html`
+  (paste your token and uncomment).
 
 **Validate after deploy:**
 - Rich Results Test → https://search.google.com/test/rich-results (paste the URL;
@@ -53,6 +62,20 @@ these naturally — **never keyword-stuff**; Google punishes it.
 - PageSpeed Insights → https://pagespeed.web.dev/ (aim for 95+).
 
 ---
+
+## What's left for YOU (off-page — I can't log into your accounts)
+
+The entire website side is done and live. These remaining steps need your
+logins/identity, so they're yours to do:
+
+1. **Google Search Console** → verify (paste the token into the placeholder in
+   `site/index.html`), submit `sitemap.xml`, Request Indexing for each page.
+2. **AlternativeTo.net** → add ShareClick under Synergy / ShareMouse / Barrier.
+3. **Product Hunt** + **Show HN** + **Reddit** (r/opensource, r/macapps, r/rust).
+4. **awesome-list PRs** (awesome-selfhosted, awesome-rust, awesome-macos).
+5. Ask visitors to **star the repo** (ranking + social proof).
+
+Detailed how-to for each is below.
 
 ## Off-page SEO — the actual work (do these in order)
 
