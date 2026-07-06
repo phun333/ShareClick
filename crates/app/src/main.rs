@@ -78,6 +78,20 @@ enum Command {
     Discover,
 }
 
+/// Hide the console window that Windows opens when the exe is double-clicked,
+/// so the tray/menu-bar app doesn't show a stray terminal.
+#[cfg(all(windows, feature = "tray"))]
+fn hide_console_window() {
+    use windows_sys::Win32::System::Console::GetConsoleWindow;
+    use windows_sys::Win32::UI::WindowsAndMessaging::{ShowWindow, SW_HIDE};
+    unsafe {
+        let hwnd = GetConsoleWindow();
+        if !hwnd.is_null() {
+            ShowWindow(hwnd, SW_HIDE);
+        }
+    }
+}
+
 fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
@@ -94,6 +108,11 @@ fn main() -> anyhow::Result<()> {
         None => {
             #[cfg(feature = "tray")]
             {
+                // Double-clicked with no args: this is the GUI. On Windows the
+                // exe is a console app, so hide the console window that pops up
+                // (CLI subcommands still keep their console).
+                #[cfg(windows)]
+                hide_console_window();
                 return tray::run();
             }
             #[cfg(not(feature = "tray"))]
