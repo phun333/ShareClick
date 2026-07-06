@@ -58,14 +58,9 @@ impl Handshake {
         *self.public.as_bytes()
     }
 
-    /// Finish the handshake given the peer's public key and the shared PSK.
-    /// Consumes `self` because the ephemeral secret must be used exactly once.
-    pub fn complete(
-        self,
-        peer_public: [u8; 32],
-        psk: &[u8],
-        role: Role,
-    ) -> Result<Session, CryptoError> {
+    /// Derive the 128-byte key material shared by both peers. Consumes `self`
+    /// (the ephemeral secret must be used exactly once).
+    fn okm(self, peer_public: [u8; 32], psk: &[u8]) -> Result<[u8; 128], CryptoError> {
         let peer = PublicKey::from(peer_public);
         let shared = self.secret.diffie_hellman(&peer);
 
@@ -81,19 +76,49 @@ impl Handshake {
 
         // HKDF-SHA256: salt = PSK (authentication), ikm = ECDH shared secret.
         let hk = Hkdf::<Sha256>::new(Some(psk), shared.as_bytes());
-        let mut okm = [0u8; 64];
+        let mut okm = [0u8; 128];
         hk.expand(&info, &mut okm).map_err(|_| CryptoError::Kdf)?;
-        let (k_i2r, k_r2i) = okm.split_at(32);
+        Ok(okm)
+    }
 
-        // Initiator sends with i2r and receives with r2i; responder mirrors.
-        let (send_key, recv_key) = match role {
-            Role::Initiator => (k_i2r, k_r2i),
-            Role::Responder => (k_r2i, k_i2r),
-        };
-        Ok(Session {
-            send: ChaCha20Poly1305::new(send_key.into()),
-            recv: ChaCha20Poly1305::new(recv_key.into()),
-        })
+    /// Finish the handshake, deriving one [`Session`] (used by the benchmark and
+    /// single-channel callers). Consumes `self`.
+    pub fn complete(
+        self,
+        peer_public: [u8; 32],
+        psk: &[u8],
+        role: Role,
+    ) -> Result<Session, CryptoError> {
+        let okm = self.okm(peer_public, psk)?;
+        Ok(session_from(&okm[0..64], role))
+    }
+
+    /// Finish the handshake, deriving **separate** sessions for the input (UDP)
+    /// and bulk (TCP) channels so their nonces never collide. Returns
+    /// `(input, bulk)`. Consumes `self`.
+    pub fn complete_bundle(
+        self,
+        peer_public: [u8; 32],
+        psk: &[u8],
+        role: Role,
+    ) -> Result<(Session, Session), CryptoError> {
+        let okm = self.okm(peer_public, psk)?;
+        let input = session_from(&okm[0..64], role);
+        let bulk = session_from(&okm[64..128], role);
+        Ok((input, bulk))
+    }
+}
+
+/// Build a directional [`Session`] from a 64-byte key block (i2r||r2i).
+fn session_from(block: &[u8], role: Role) -> Session {
+    let (k_i2r, k_r2i) = block.split_at(32);
+    let (send_key, recv_key) = match role {
+        Role::Initiator => (k_i2r, k_r2i),
+        Role::Responder => (k_r2i, k_i2r),
+    };
+    Session {
+        send: ChaCha20Poly1305::new(send_key.into()),
+        recv: ChaCha20Poly1305::new(recv_key.into()),
     }
 }
 
@@ -148,6 +173,24 @@ mod tests {
         let sa = a.complete(b_pub, psk_a, Role::Initiator).unwrap();
         let sb = b.complete(a_pub, psk_b, Role::Responder).unwrap();
         (sa, sb)
+    }
+
+    #[test]
+    fn bundle_channels_use_independent_keys() {
+        let psk = b"shared-secret-passphrase";
+        let a = Handshake::new();
+        let b = Handshake::new();
+        let (a_pub, b_pub) = (a.public_bytes(), b.public_bytes());
+        let (a_in, a_bulk) = a.complete_bundle(b_pub, psk, Role::Initiator).unwrap();
+        let (b_in, b_bulk) = b.complete_bundle(a_pub, psk, Role::Responder).unwrap();
+        // Each channel round-trips with its own peer session...
+        let ct = a_in.seal(0, b"", b"input");
+        assert_eq!(b_in.open(0, b"", &ct).unwrap(), b"input");
+        let ct2 = a_bulk.seal(0, b"", b"bulk");
+        assert_eq!(b_bulk.open(0, b"", &ct2).unwrap(), b"bulk");
+        // ...but a ciphertext from one channel cannot be opened by the other.
+        let ct3 = a_in.seal(0, b"", b"x");
+        assert!(b_bulk.open(0, b"", &ct3).is_err());
     }
 
     #[test]
