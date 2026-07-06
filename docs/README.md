@@ -16,6 +16,7 @@ get fully up to speed and continue without breaking anything.
 | Cut a new version / publish installers | [RELEASING.md](./RELEASING.md) |
 | Know *why* a design choice was made | [DECISIONS.md](./DECISIONS.md) |
 | See what was built, phase by phase | [HISTORY.md](./HISTORY.md) |
+| Rank the site / grow discoverability | [SEO.md](./SEO.md) |
 | Install as an end user (past the unsigned-app warnings) | [INSTALL.md](./INSTALL.md) |
 | Install overview | [../README.md](../README.md) |
 | See the changelog | [../CHANGELOG.md](../CHANGELOG.md) |

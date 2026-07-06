@@ -3,10 +3,83 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>shareclick</title>
-<meta name="description" content="One keyboard & mouse across Mac and Windows. Encrypted, open-source, lowest input lag." />
-<meta property="og:title" content="shareclick" />
-<meta property="og:description" content="One keyboard & mouse across Mac and Windows. Encrypted, open-source." />
+<title>ShareClick — Share mouse &amp; keyboard between Mac &amp; Windows (free, open source)</title>
+<meta name="description" content="Free open-source software KVM: share one keyboard, mouse, clipboard &amp; files between your Mac and Windows PC over the LAN. Encrypted, low-latency, no cloud. A Synergy &amp; ShareMouse alternative." />
+<meta name="keywords" content="software KVM, share mouse keyboard mac windows, Synergy alternative, ShareMouse alternative, Barrier alternative, free KVM software, share clipboard mac and windows, control two computers one keyboard mouse, Universal Control for Windows, open source KVM" />
+<meta name="author" content="wiredaddict" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<meta name="theme-color" content="#fafafa" />
+<link rel="canonical" href="https://phun333.github.io/ShareClick/" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="ShareClick" />
+<meta property="og:title" content="ShareClick — share mouse &amp; keyboard between Mac &amp; Windows" />
+<meta property="og:description" content="Free, open-source software KVM. One keyboard, mouse, clipboard &amp; files across Mac and Windows over your LAN. Encrypted, low-latency, no cloud." />
+<meta property="og:url" content="https://phun333.github.io/ShareClick/" />
+<meta property="og:image" content="https://phun333.github.io/ShareClick/og.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:site" content="@wiredaddict" />
+<meta name="twitter:creator" content="@wiredaddict" />
+<meta name="twitter:title" content="ShareClick — share mouse &amp; keyboard between Mac &amp; Windows" />
+<meta name="twitter:description" content="Free, open-source software KVM. One keyboard, mouse, clipboard &amp; files across Mac and Windows. Encrypted, low-latency, no cloud." />
+<meta name="twitter:image" content="https://phun333.github.io/ShareClick/og.png" />
+
+<!-- Structured data: SoftwareApplication (free) + FAQ -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "ShareClick",
+  "alternateName": "ShareClick Software KVM",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "macOS, Windows",
+  "description": "Free open-source software KVM to share one keyboard, mouse, clipboard and files between Mac and Windows over the LAN. Encrypted and low-latency. A free alternative to Synergy and ShareMouse.",
+  "url": "https://phun333.github.io/ShareClick/",
+  "downloadUrl": "https://github.com/phun333/ShareClick/releases",
+  "softwareVersion": "0.1.0",
+  "isAccessibleForFree": true,
+  "license": "https://opensource.org/license/mit",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "featureList": [
+    "Share one keyboard and mouse across Mac and Windows",
+    "Clipboard sync (text and images)",
+    "File transfer over the LAN",
+    "End-to-end encryption (X25519 + ChaCha20-Poly1305)",
+    "Automatic screen-edge switching",
+    "mDNS zero-config discovery"
+  ],
+  "image": "https://phun333.github.io/ShareClick/og.png",
+  "author": { "@type": "Person", "name": "wiredaddict", "url": "https://x.com/wiredaddict" },
+  "sameAs": [
+    "https://github.com/phun333/ShareClick",
+    "https://x.com/wiredaddict"
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "Is ShareClick free?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. ShareClick is completely free and open source (MIT / Apache-2.0). No account, no subscription, no cloud." } },
+    { "@type": "Question", "name": "Does it share a mouse and keyboard between Mac and Windows?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. ShareClick is a software KVM: one keyboard and mouse control both your Mac and Windows PC over the local network. Move the cursor to a screen edge to switch machines." } },
+    { "@type": "Question", "name": "Is ShareClick a free alternative to Synergy and ShareMouse?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. It does what paid tools like Synergy and ShareMouse do — input sharing, clipboard sync and file transfer — but it is free, open source, and built for lower input lag." } },
+    { "@type": "Question", "name": "Does it sync the clipboard and transfer files?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. The clipboard (text and images) syncs automatically, and you can send files straight across the encrypted connection." } },
+    { "@type": "Question", "name": "Is it secure and does it need the internet?",
+      "acceptedAnswer": { "@type": "Answer", "text": "It runs on your local network only — no cloud. Every channel is end-to-end encrypted with X25519 key exchange and ChaCha20-Poly1305, authenticated by a shared passphrase." } }
+  ]
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -64,6 +137,15 @@
   .feat span{color:var(--muted);font-size:12.5px}
   .feat div:nth-child(3n){border-right:none}
   .feat div:nth-last-child(-n+3){border-bottom:none}
+
+  .faq{max-width:640px;margin:60px auto 40px;padding:0 24px}
+  .faq h2{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0 0 10px;text-align:center;color:var(--ink)}
+  .faq details{border-bottom:1px solid var(--line);padding:14px 2px}
+  .faq summary{cursor:pointer;font-weight:500;font-size:14px;list-style:none;display:flex;justify-content:space-between;gap:12px;color:var(--ink)}
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary::after{content:"+";color:var(--muted)}
+  .faq details[open] summary::after{content:"\2212"}
+  .faq p{margin:10px 0 2px;color:var(--muted);font-size:13.5px}
 
   @media(max-width:680px){
     .feat{grid-template-columns:1fr}
@@ -125,6 +207,30 @@
     </div>
   </div>
 </main>
+
+<section class="faq" id="faq">
+  <h2>faq</h2>
+  <details>
+    <summary>is shareclick free?</summary>
+    <p>yes — completely free and open source (MIT / Apache-2.0). no account, no subscription, no cloud.</p>
+  </details>
+  <details>
+    <summary>does it share a mouse &amp; keyboard between Mac and Windows?</summary>
+    <p>yes. shareclick is a software KVM: one keyboard and mouse control both your Mac and Windows PC over the local network. move the cursor to a screen edge to switch machines.</p>
+  </details>
+  <details>
+    <summary>is it a free alternative to Synergy and ShareMouse?</summary>
+    <p>yes. it does what paid tools like Synergy and ShareMouse do — input sharing, clipboard sync and file transfer — but free, open source, and built for lower input lag.</p>
+  </details>
+  <details>
+    <summary>does it sync the clipboard and transfer files?</summary>
+    <p>yes. the clipboard (text and images) syncs automatically, and you can send files straight across the encrypted connection.</p>
+  </details>
+  <details>
+    <summary>is it secure? does it need the internet?</summary>
+    <p>LAN-only, no cloud. every channel is end-to-end encrypted with X25519 + ChaCha20-Poly1305, authenticated by a shared passphrase.</p>
+  </details>
+</section>
 
 <script>
   (function(){
