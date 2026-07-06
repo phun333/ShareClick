@@ -7,9 +7,26 @@ with the lowest input lag we can squeeze out.
 Think ShareMouse / Synergy / Deskflow, but free, open, and built for latency
 first.
 
-> Status: **early MVP.** Transport + native input capture/injection work and are
-> benchmarked. Clipboard, file transfer, and seamless edge-switching are on the
-> roadmap below.
+## Download & install (no Rust required)
+
+Grab the installer for your OS from the
+[**Releases**](https://github.com/ali/ShareClick/releases) page:
+
+- **macOS:** `ShareClick-*.dmg` → open, drag **ShareClick** to Applications. On
+  first launch grant **Accessibility** + **Input Monitoring** (System Settings →
+  Privacy & Security). Unsigned build: if blocked, right-click the app → **Open**.
+- **Windows:** `ShareClick-Setup-*.exe` → run it (no admin needed). If SmartScreen
+  warns, **More info → Run anyway**.
+
+Then click the menu-bar / tray icon → **Settings & Monitor Manager** to set a
+shared passphrase (same on both machines) and your screen layout. Building from
+source is only needed for development — see [docs/](./docs/).
+
+## Documentation
+
+Full docs live in [**docs/**](./docs/README.md): architecture, wire protocol,
+security model, development guide, release process, decision log, and build
+history. Changelog: [CHANGELOG.md](./CHANGELOG.md).
 
 ---
 
