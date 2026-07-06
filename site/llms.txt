@@ -1,0 +1,28 @@
+# ShareClick
+
+> ShareClick is a free, open-source software KVM. One keyboard and mouse control
+> both a Mac and a Windows PC over the local network, with clipboard (text and
+> images) and file sharing built in. Every channel is end-to-end encrypted
+> (X25519 + ChaCha20-Poly1305) and it runs LAN-only — no hardware, no cloud, no
+> account. It is a free alternative to Synergy, ShareMouse and Barrier, built
+> for the lowest input lag (~6 µs transport overhead).
+
+## Key facts
+- Price: Free (open source, MIT / Apache-2.0), unlimited machines
+- Platforms: macOS and Windows
+- Features: keyboard & mouse sharing, clipboard sync (text + images), file
+  transfer, automatic screen-edge switching, mDNS zero-config discovery
+- Security: end-to-end encrypted, authenticated by a shared passphrase, LAN-only
+- Latency: ~6 µs transport overhead (UDP input path)
+- Alternative to: Synergy, ShareMouse, Barrier, Input Leap
+
+## Pages
+- [Home](https://phun333.github.io/ShareClick/): overview and downloads
+- [Setup guide](https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.html): how to share a mouse and keyboard between Mac and Windows
+- [ShareClick vs Synergy](https://phun333.github.io/ShareClick/vs-synergy.html)
+- [ShareClick vs ShareMouse](https://phun333.github.io/ShareClick/vs-sharemouse.html)
+- [ShareClick vs Barrier](https://phun333.github.io/ShareClick/vs-barrier.html)
+- [Pricing](https://phun333.github.io/ShareClick/pricing.md): free
+- [Install guide](https://github.com/phun333/ShareClick/blob/main/docs/INSTALL.md)
+- [Source code](https://github.com/phun333/ShareClick)
+- [Download](https://github.com/phun333/ShareClick/releases)
