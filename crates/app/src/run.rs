@@ -18,7 +18,18 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use shareclick_protocol::crypto::{Role, Session};
-use shareclick_protocol::{BulkMsg, ClipboardData, InputEvent, InputMsg};
+use shareclick_protocol::{BulkMsg, ClipboardData, Edge, InputEvent, InputMsg};
+
+/// The client enters from the edge opposite the one the server's cursor left by
+/// (leave the Mac's right edge → arrive at the PC's left edge).
+fn opposite(e: Edge) -> Edge {
+    match e {
+        Edge::Left => Edge::Right,
+        Edge::Right => Edge::Left,
+        Edge::Top => Edge::Bottom,
+        Edge::Bottom => Edge::Top,
+    }
+}
 
 use crate::bulk::BulkConn;
 use crate::capture;
@@ -124,7 +135,8 @@ fn run_server_input(
             if let Some(p) = peer {
                 if active {
                     let (edge, entry) = *control.entry.lock().unwrap();
-                    let _ = udp.send_to(InputMsg::Enter { edge, entry }, p);
+                    // Send the client's *entry* edge (opposite of our exit edge).
+                    let _ = udp.send_to(InputMsg::Enter { edge: opposite(edge), entry }, p);
                 } else {
                     let _ = udp.send_to(InputMsg::Leave, p);
                 }

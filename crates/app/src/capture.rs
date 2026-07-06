@@ -35,17 +35,49 @@ pub const TOGGLE_KEY: rdev::Key = rdev::Key::F12;
 pub fn run(tx: Sender<InputEvent>, control: Arc<Control>, edges: EdgeConfig) -> anyhow::Result<()> {
     // grab's callback is `Fn` (not `FnMut`) so mutable state lives behind locks.
     let last_pos: Mutex<Option<(f64, f64)>> = Mutex::new(None);
+    // Reliable escape hotkey: BOTH Shift keys held together toggles control.
+    // Works on every keyboard and (unlike F12 on macOS, which is a media key)
+    // is captured reliably by rdev. This is the "get me unstuck" combo.
+    let lshift = std::sync::atomic::AtomicBool::new(false);
+    let rshift = std::sync::atomic::AtomicBool::new(false);
+    let combo_done = std::sync::atomic::AtomicBool::new(false);
+
+    let toggle = move |control: &Control| {
+        let now = !control.active.load(Ordering::Relaxed);
+        if now {
+            *control.entry.lock().unwrap() = (Edge::Left, 0.5);
+        }
+        control.active.store(now, Ordering::Relaxed);
+        tracing::info!(active = now, "control toggled (hotkey)");
+    };
 
     let callback = move |event: Event| -> Option<Event> {
-        // Toggle hotkey: always consumed, never forwarded.
+        // --- Reliable both-Shift escape combo (does not swallow the keys, so
+        //     capitals still work when typing on the remote). ---
+        match event.event_type {
+            EventType::KeyPress(rdev::Key::ShiftLeft) => lshift.store(true, Ordering::Relaxed),
+            EventType::KeyRelease(rdev::Key::ShiftLeft) => {
+                lshift.store(false, Ordering::Relaxed);
+                combo_done.store(false, Ordering::Relaxed);
+            }
+            EventType::KeyPress(rdev::Key::ShiftRight) => rshift.store(true, Ordering::Relaxed),
+            EventType::KeyRelease(rdev::Key::ShiftRight) => {
+                rshift.store(false, Ordering::Relaxed);
+                combo_done.store(false, Ordering::Relaxed);
+            }
+            _ => {}
+        }
+        if lshift.load(Ordering::Relaxed)
+            && rshift.load(Ordering::Relaxed)
+            && !combo_done.swap(true, Ordering::Relaxed)
+        {
+            toggle(&control);
+        }
+
+        // F12 also toggles (works well on Windows where it's a real F-key).
         if let EventType::KeyPress(k) = event.event_type {
             if k == TOGGLE_KEY {
-                let now = !control.active.load(Ordering::Relaxed);
-                if now {
-                    *control.entry.lock().unwrap() = (Edge::Left, 0.5);
-                }
-                control.active.store(now, Ordering::Relaxed);
-                tracing::info!(active = now, "control toggled");
+                toggle(&control);
                 return None;
             }
         }
