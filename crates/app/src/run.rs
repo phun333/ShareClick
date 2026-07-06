@@ -12,6 +12,7 @@ use shareclick_protocol::{BulkMsg, ClipboardData, InputMsg};
 use crate::bulk::BulkConn;
 use crate::capture;
 use crate::clipboard;
+use crate::filexfer::FileReceiver;
 use crate::emit::Injector;
 use crate::transport::InputChannel;
 
@@ -37,6 +38,9 @@ fn serve_bulk(conn: BulkConn) -> anyhow::Result<()> {
     std::thread::spawn(move || clipboard::apply(in_rx, last_apply));
     std::thread::spawn(move || clipboard::watch(out_tx, last));
 
+    // Incoming files land in ./received next to the binary's working dir.
+    let mut receiver = FileReceiver::new("received");
+
     // Reader loop (this thread) routes inbound messages.
     let mut rconn = conn;
     loop {
@@ -44,7 +48,14 @@ fn serve_bulk(conn: BulkConn) -> anyhow::Result<()> {
             Ok(BulkMsg::Clipboard(data)) => {
                 let _ = in_tx.send(data);
             }
-            Ok(_) => {} // Hello/Heartbeat/File* handled later
+            Ok(msg @ (BulkMsg::FileBegin { .. }
+            | BulkMsg::FileChunk { .. }
+            | BulkMsg::FileEnd { .. })) => {
+                if let Err(e) = receiver.handle(&msg) {
+                    tracing::warn!(error = %e, "file receive failed");
+                }
+            }
+            Ok(_) => {} // Hello/Heartbeat handled later
             Err(_) => return Ok(()), // peer gone
         }
     }

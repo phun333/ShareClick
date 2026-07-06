@@ -4,10 +4,10 @@
 //! over the LAN with the lowest possible input lag.
 
 mod bench;
+mod bulk;
+mod filexfer;
 mod transport;
 
-#[cfg(feature = "native")]
-mod bulk;
 #[cfg(feature = "native")]
 mod capture;
 #[cfg(feature = "native")]
@@ -47,6 +47,13 @@ enum Command {
         /// Server address, e.g. 192.168.1.20:24800
         server: String,
     },
+    /// Send a file to a listening peer's bulk channel.
+    SendFile {
+        /// Target address, e.g. 192.168.1.20:24800
+        to: String,
+        /// Path to the file to send.
+        path: String,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
@@ -67,6 +74,14 @@ fn main() -> anyhow::Result<()> {
         #[cfg(not(feature = "native"))]
         Command::Serve { .. } | Command::Connect { .. } => {
             anyhow::bail!("serve/connect require the `native` feature (build without --no-default-features)")
+        }
+        Command::SendFile { to, path } => {
+            use std::net::ToSocketAddrs;
+            let addr = to
+                .to_socket_addrs()?
+                .next()
+                .ok_or_else(|| anyhow::anyhow!("could not resolve {to}"))?;
+            filexfer::send_file(addr, std::path::Path::new(&path))
         }
     }
 }
