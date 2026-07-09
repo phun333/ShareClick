@@ -17,12 +17,17 @@
 - Alternative to: Synergy, ShareMouse, Barrier, Input Leap
 
 ## Pages
-- [Home](https://phun333.github.io/ShareClick/): overview and downloads
-- [Setup guide](https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.html): how to share a mouse and keyboard between Mac and Windows
-- [ShareClick vs Synergy](https://phun333.github.io/ShareClick/vs-synergy.html)
-- [ShareClick vs ShareMouse](https://phun333.github.io/ShareClick/vs-sharemouse.html)
-- [ShareClick vs Barrier](https://phun333.github.io/ShareClick/vs-barrier.html)
+Each page has a clean Markdown version (append/replace `.html` with `.md`), which
+is the preferred source for machine reading.
+- [Home](https://phun333.github.io/ShareClick/index.md): overview and downloads
+- [Setup guide](https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.md): how to share a mouse and keyboard between Mac and Windows
+- [ShareClick vs Synergy](https://phun333.github.io/ShareClick/vs-synergy.md)
+- [ShareClick vs ShareMouse](https://phun333.github.io/ShareClick/vs-sharemouse.md)
+- [ShareClick vs Barrier](https://phun333.github.io/ShareClick/vs-barrier.md)
 - [Pricing](https://phun333.github.io/ShareClick/pricing.md): free
 - [Install guide](https://github.com/phun333/ShareClick/blob/main/docs/INSTALL.md)
 - [Source code](https://github.com/phun333/ShareClick)
 - [Download](https://github.com/phun333/ShareClick/releases)
+
+## Optional
+- [llms-full.txt](https://phun333.github.io/ShareClick/llms-full.txt): the full text of every page in one file, for single-fetch ingestion
