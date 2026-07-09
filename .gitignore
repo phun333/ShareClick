@@ -64,3 +64,6 @@ dist-site/
 # Keep the product-marketing context tracked, ignore the bulky vendored skills.
 .agents/*
 !.agents/product-marketing.md
+
+# Cloned reference (GPLv2 — study only, never commit)
+references/deskflow-clone/

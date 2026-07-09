@@ -20,6 +20,23 @@ use std::time::Duration;
 use shareclick_protocol::crypto::{Role, Session};
 use shareclick_protocol::{BulkMsg, ClipboardData, Edge, InputEvent, InputMsg};
 
+/// A batch that releases every modifier key on the client. Sent on every
+/// control hand-off so a modifier held during the switch can't stay stuck down
+/// on the other machine (the classic "Alt+Tab / Ctrl stuck" bug).
+fn release_all_modifiers() -> InputMsg {
+    use shareclick_protocol::Key::{LAlt, LCtrl, LMeta, LShift, RAlt, RCtrl, RMeta, RShift};
+    InputMsg::Events(vec![
+        InputEvent::Key { key: LCtrl, pressed: false },
+        InputEvent::Key { key: RCtrl, pressed: false },
+        InputEvent::Key { key: LAlt, pressed: false },
+        InputEvent::Key { key: RAlt, pressed: false },
+        InputEvent::Key { key: LShift, pressed: false },
+        InputEvent::Key { key: RShift, pressed: false },
+        InputEvent::Key { key: LMeta, pressed: false },
+        InputEvent::Key { key: RMeta, pressed: false },
+    ])
+}
+
 /// The client enters from the edge opposite the one the server's cursor left by
 /// (leave the Mac's right edge → arrive at the PC's left edge).
 fn opposite(e: Edge) -> Edge {
@@ -142,6 +159,8 @@ fn run_server_input(
         let active = control.active.load(Ordering::Relaxed);
         if active != prev_active {
             if let Some(p) = peer {
+                // Clear any modifiers held across the switch (anti-stuck-key).
+                let _ = udp.send_to(release_all_modifiers(), p);
                 if active {
                     // Only ask the client to track a return border when control
                     // was handed over by an actual edge crossing. Manual toggles
@@ -195,7 +214,7 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
     let control = Arc::new(Control::new());
     let control_cap = control.clone();
     std::thread::spawn(move || {
-        if let Err(e) = capture::run(tx, control_cap, edges) {
+        if let Err(e) = capture::run(tx, control_cap, edges, (sw, sh)) {
             tracing::error!(error = %e, "capture thread stopped");
         }
     });
