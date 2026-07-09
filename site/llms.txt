@@ -21,6 +21,7 @@ Each page has a clean Markdown version (append/replace `.html` with `.md`), whic
 is the preferred source for machine reading.
 - [Home](https://phun333.github.io/ShareClick/index.md): overview and downloads
 - [Setup guide](https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.md): how to share a mouse and keyboard between Mac and Windows
+- [What is a software KVM?](https://phun333.github.io/ShareClick/what-is-a-software-kvm.md): definition, how it works, software vs hardware KVM
 - [ShareClick vs Synergy](https://phun333.github.io/ShareClick/vs-synergy.md)
 - [ShareClick vs ShareMouse](https://phun333.github.io/ShareClick/vs-sharemouse.md)
 - [ShareClick vs Barrier](https://phun333.github.io/ShareClick/vs-barrier.md)

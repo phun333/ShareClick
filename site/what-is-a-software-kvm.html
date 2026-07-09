@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>What is a software KVM? Definition, how it works &amp; examples</title>
+<meta name="description" content="A software KVM lets one keyboard and mouse control several computers over the network — no hardware box. Learn how it works, how it differs from a hardware KVM, and the best free option." />
+<meta name="keywords" content="what is a software KVM, software KVM meaning, software KVM vs hardware KVM, KVM switch software, share keyboard mouse between computers" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<meta name="theme-color" content="#fafafa" />
+<link rel="canonical" href="https://phun333.github.io/ShareClick/what-is-a-software-kvm.html" />
+<link rel="alternate" type="text/markdown" href="what-is-a-software-kvm.md" title="Markdown version (for LLMs)" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="ShareClick" />
+<meta property="og:title" content="What is a software KVM? Definition &amp; how it works" />
+<meta property="og:description" content="A software KVM lets one keyboard and mouse control several computers over the network — no hardware box. How it works and the best free option." />
+<meta property="og:url" content="https://phun333.github.io/ShareClick/what-is-a-software-kvm.html" />
+<meta property="og:image" content="https://phun333.github.io/ShareClick/og.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://phun333.github.io/ShareClick/og.png" />
+<script type="application/ld+json">
+{ "@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+  {"@type":"ListItem","position":1,"name":"ShareClick","item":"https://phun333.github.io/ShareClick/"},
+  {"@type":"ListItem","position":2,"name":"What is a software KVM?","item":"https://phun333.github.io/ShareClick/what-is-a-software-kvm.html"}
+]}
+</script>
+<script type="application/ld+json">
+{ "@context":"https://schema.org","@type":"DefinedTerm",
+  "name":"Software KVM",
+  "description":"A software KVM (keyboard, video, mouse) is an application that lets one keyboard and mouse control multiple computers over a network connection, switching between them by moving the cursor across screen edges — without any physical KVM switch hardware.",
+  "inDefinedTermSet":"https://phun333.github.io/ShareClick/what-is-a-software-kvm.html"
+}
+</script>
+<script type="application/ld+json">
+{ "@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+  {"@type":"Question","name":"What is a software KVM?","acceptedAnswer":{"@type":"Answer","text":"A software KVM is an application that lets one keyboard and mouse control several computers over a network, switching between machines by moving the cursor to a screen edge. Unlike a hardware KVM switch, there is no physical box or cables — the keyboard, mouse and clipboard are shared entirely in software."}},
+  {"@type":"Question","name":"What does KVM stand for?","acceptedAnswer":{"@type":"Answer","text":"KVM stands for Keyboard, Video and Mouse. A traditional hardware KVM switch shares all three between computers through a box. A software KVM shares the keyboard and mouse (and usually the clipboard and files) over the network; each computer keeps using its own display."}},
+  {"@type":"Question","name":"How is a software KVM different from a hardware KVM?","acceptedAnswer":{"@type":"Answer","text":"A hardware KVM is a physical device you plug keyboard, mouse and monitors into, and it switches all of them between computers. A software KVM needs no hardware: it runs as an app on each computer, shares the keyboard and mouse over the LAN, and lets each machine drive its own screen. Software KVMs also typically sync the clipboard and transfer files."}},
+  {"@type":"Question","name":"Is there a free software KVM for Mac and Windows?","acceptedAnswer":{"@type":"Answer","text":"Yes. ShareClick is a free, open-source software KVM that shares one keyboard, mouse, clipboard and files between a Mac and a Windows PC over the local network, with end-to-end encryption and low latency."}}
+]}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <a class="home" href="./"><span class="dot"></span> shareclick</a>
+    <nav class="hnav">
+      <a class="icon" href="https://x.com/wiredaddict" aria-label="X (Twitter)"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+      <a class="icon" href="https://github.com/phun333/ShareClick" aria-label="GitHub"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-1.8c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.8 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.5-2.7 5.5-5.3 5.8.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg></a>
+    </nav>
+  </header>
+</div>
+
+<main class="doc">
+  <div class="wrap">
+    <article>
+      <p class="crumb"><a href="./">shareclick</a> / what is a software KVM</p>
+      <h1>What is a software KVM?</h1>
+      <p class="lead">A <strong>software KVM</strong> is an application that lets <strong>one keyboard
+      and mouse control several computers</strong> over a network, switching between them by moving
+      the cursor to a screen edge — with <strong>no hardware box or cables</strong>. It usually shares
+      the clipboard and can transfer files too.</p>
+
+      <h2>What does KVM stand for?</h2>
+      <p>KVM stands for <strong>Keyboard, Video and Mouse</strong>. The term comes from hardware
+      "KVM switches" that let you drive several computers from a single keyboard, monitor and mouse.
+      A <em>software</em> KVM keeps the idea but drops the hardware: it shares the keyboard and mouse
+      (and typically the clipboard and files) between machines over your local network, while each
+      computer keeps using its own display.</p>
+
+      <h2>How does a software KVM work?</h2>
+      <ul>
+        <li>You install a small app on each computer and put them on the same network (LAN).</li>
+        <li>You lay out the screens — e.g. "the PC is to the right of the Mac".</li>
+        <li>When you push the mouse past a shared screen edge, control jumps to the next computer;
+          your keystrokes and mouse movements are sent to it over the network.</li>
+        <li>The clipboard syncs automatically, so you can copy on one machine and paste on the other,
+          and many tools (including ShareClick) can send files across too.</li>
+      </ul>
+
+      <h2>Software KVM vs hardware KVM</h2>
+      <table class="cmp">
+        <colgroup><col class="c1"><col><col></colgroup>
+        <thead><tr><th></th><th>Software KVM</th><th>Hardware KVM</th></tr></thead>
+        <tbody>
+          <tr><td>Extra hardware</td><td class="win">None</td><td>Physical switch + cables</td></tr>
+          <tr><td>Shares the display</td><td>No — each PC uses its own screen</td><td class="yes">Yes (switches monitors)</td></tr>
+          <tr><td>Clipboard &amp; files</td><td class="win">Yes (synced over network)</td><td>No</td></tr>
+          <tr><td>Cost</td><td class="win">Often free</td><td>Buy the device</td></tr>
+          <tr><td>Best for</td><td>Two+ computers on one desk sharing input</td><td>Servers / headless machines</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Is there a free software KVM for Mac and Windows?</h2>
+      <p>Yes. <strong>ShareClick</strong> is a free, open-source software KVM that shares one keyboard,
+      mouse, clipboard and files between a <strong>Mac and a Windows PC</strong> over the local
+      network. Every channel is end-to-end encrypted (X25519 + ChaCha20-Poly1305), it runs LAN-only
+      (no cloud), and it's built for the lowest input lag (~6&nbsp;µs transport overhead). It's a
+      free alternative to Synergy, ShareMouse, Barrier and Input Leap.</p>
+
+      <div class="verdict">
+        <p>In short: a software KVM turns two computers on your desk into one seamless workspace —
+        one keyboard, one mouse, one clipboard — without any extra hardware.</p>
+      </div>
+
+      <div class="cta-inline">
+        <a class="btn" href="https://github.com/phun333/ShareClick/releases">Download ShareClick — free</a>
+        <a class="btn ghost" href="how-to-share-mouse-keyboard-mac-windows.html">Setup guide</a>
+      </div>
+    </article>
+  </div>
+
+  <footer>
+    <a href="./">shareclick</a> · <a href="vs-synergy.html">vs Synergy</a> ·
+    <a href="vs-sharemouse.html">vs ShareMouse</a> · <a href="vs-barrier.html">vs Barrier</a> ·
+    <a href="https://github.com/phun333/ShareClick">GitHub</a> · MIT / Apache-2.0
+  </footer>
+</main>
+
+</body>
+</html>
