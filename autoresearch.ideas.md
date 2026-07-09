@@ -55,3 +55,22 @@
 - Tried warp-to-anchor + CGAssociateMouseAndMouseCursorPosition(true): broke forwarding (likely the ~250ms post-warp event-suppression deadzone). Reverted.
 - Proper fix: replace rdev mouse capture on macOS with a custom CGEventTap that (a) reads raw kCGMouseEventDeltaX/Y (relative deltas, valid even when the cursor is frozen), and (b) uses CGAssociateMouseAndMouseCursorPosition(false) to freeze the cursor + CGDisplayHideCursor to hide it. This is the standard remote-desktop/game capture technique. Keyboard can stay on rdev.
 - Windows: rdev grab returning 1 (None) DOES suppress there, so Windows-as-server should switch correctly already.
+
+## Deferred feature: monitor offset (realistic edge crossing, part 3)
+Parts 1+2 done (client warps to entry on Enter; bidirectional Leave{entry} with
+proportional fraction; tested). Part 3 = arbitrary vertical/horizontal OFFSET so
+the cursor crosses at the exact placed position (not just proportional). Design:
+- **Config:** add `offset: i32` (default 0) = the OTHER screen's top (left for
+  vertical adjacency) relative to THIS screen's top, in this screen's pixels.
+- **Server is the authority** (holds offset + the client's recorded size). Keep
+  the client dumb (it only sends/receives local pixel coords):
+  - Enter{edge, pos:i32}: server computes client-local entry
+    `pos = clamp(exit_local - offset, 0, client_dim)`; client warps there.
+  - Leave{pos:i32}: client sends its local exit pixel; server enters at
+    `clamp(pos + offset, 0, server_dim)`.
+  - This means switching Enter/Leave payload from fraction (f32) to pixel (i32)
+    — a wire change; bump PROTOCOL_VERSION.
+- **GUI:** allow free vertical/horizontal drag (not just centre-snap); store the
+  resulting offset in config. Currently the arrangement centre-snaps, so there is
+  no offset to honour yet — GUI offset placement is a prerequisite.
+- Needs BOTH binaries updated + a 2-machine live test.

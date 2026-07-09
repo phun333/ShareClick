@@ -7,7 +7,23 @@ All notable changes to ShareClick are documented here. The format is based on
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- **Seamless macOS cursor switching** — while the client has control the local
+  Mac cursor is hidden and pinned (Deskflow technique: `SetsCursorInBackground`
+  + warp-to-centre + live position), so the pointer truly *leaves* one screen
+  and appears on the other instead of mirroring.
+- **Visual settings & monitor-arrangement window** (`gui` feature) — drag the two
+  monitors to lay them out like macOS Displays; ShareClick computes the edge
+  adjacency and saves the config. Opened from the tray **Settings**.
+- **Automatic remote screen size** — the client reports its resolution on connect
+  (like Deskflow's DINF), so the arrangement window shows the real size.
+
+### Fixed
+- Stuck modifier keys (Ctrl/Alt "Alt+Tab" bug) after a control hand-off — all
+  modifiers are now released on every switch.
+- Windows: hide the stray console window when launched as the tray app.
+- Cursor-return edge is now the opposite of the exit edge (fixes not being able
+  to return control).
 
 ## [0.1.0] - 2026-07-06
 

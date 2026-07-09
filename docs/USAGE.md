@@ -27,12 +27,24 @@ roles — just swap which one runs "server" vs "client".)
 
 1. Launch ShareClick. It lives in the **menu bar** (macOS, top‑right) or the
    **system tray** (Windows, bottom‑right).
-2. Click the icon → **Settings & Monitor Manager**. This opens a text file
-   (`config.toml`).
-3. Edit it (see the fields below), **save**, and close the editor.
+2. Click the icon → **Settings & Monitor Manager**. This opens the visual
+   settings window.
+3. Set the **shared passphrase** (same on both machines), the machine names, and
+   — on the client — the **server host** (or leave it blank to auto‑discover).
+4. In the **arrangement** panel, drag the second monitor to where it physically
+   sits next to the first (left / right / above / below). ShareClick works out
+   which screen edges border each other from that. Then **Save**.
 
-> Screen sizes are **auto-detected** — you don't set them. (Add
-> `screen = [w, h]` under a machine only to override a wrong detection.)
+> Screen sizes are **auto-detected**: this machine's from the OS, and the other
+> machine's is reported automatically the first time it connects. You can also
+> type the other screen's size in the window. Once arranged, just push the
+> cursor across the shared edge — no hotkey needed (both Shift keys still works
+> as a fallback).
+
+<details><summary>Prefer to edit the config file by hand? (advanced)</summary>
+
+The window writes a plain `config.toml`; you can edit it directly instead.
+Add `screen = [w, h]` under a machine only to override a wrong auto-detection.</details>
 
 **On the Mac (server)** set:
 ```toml
