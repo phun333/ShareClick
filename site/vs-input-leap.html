@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ShareClick vs Input Leap — encrypted, file transfer, low latency</title>
+<meta name="description" content="ShareClick vs Input Leap (the maintained Barrier fork): encrypted by default, clipboard images, file transfer and zero-config discovery for Mac and Windows. Free &amp; open source." />
+<meta name="keywords" content="Input Leap alternative, Input Leap vs, Barrier fork, share mouse keyboard mac windows, software KVM, open source KVM" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<meta name="theme-color" content="#fafafa" />
+<link rel="canonical" href="https://phun333.github.io/ShareClick/vs-input-leap.html" />
+<link rel="alternate" type="text/markdown" href="vs-input-leap.md" title="Markdown version (for LLMs)" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="ShareClick" />
+<meta property="og:title" content="ShareClick vs Input Leap — encrypted by default, with file transfer" />
+<meta property="og:description" content="A free, open-source Input Leap alternative: encrypted by default, clipboard images, file transfer and mDNS discovery for Mac and Windows." />
+<meta property="og:url" content="https://phun333.github.io/ShareClick/vs-input-leap.html" />
+<meta property="og:image" content="https://phun333.github.io/ShareClick/og.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://phun333.github.io/ShareClick/og.png" />
+<script type="application/ld+json">
+{ "@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+  {"@type":"ListItem","position":1,"name":"ShareClick","item":"https://phun333.github.io/ShareClick/"},
+  {"@type":"ListItem","position":2,"name":"ShareClick vs Input Leap","item":"https://phun333.github.io/ShareClick/vs-input-leap.html"}
+]}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <a class="home" href="./"><span class="dot"></span> shareclick</a>
+    <nav class="hnav">
+      <a class="icon" href="https://x.com/wiredaddict" aria-label="X (Twitter)"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+      <a class="icon" href="https://github.com/phun333/ShareClick" aria-label="GitHub"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-1.8c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.8 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.5-2.7 5.5-5.3 5.8.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg></a>
+    </nav>
+  </header>
+</div>
+
+<main class="doc">
+  <div class="wrap">
+    <article>
+      <p class="crumb"><a href="./">shareclick</a> / vs Input Leap</p>
+      <h1>ShareClick vs Input Leap</h1>
+      <p class="lead">Input Leap is the community-maintained fork of Barrier — a solid, cross-platform
+      open-source KVM. ShareClick covers the same core idea for <strong>Mac↔Windows</strong>, but is
+      <strong>encrypted by default</strong>, ships <strong>file transfer</strong> and clipboard
+      images, and uses zero-config discovery so you never type an IP.</p>
+
+      <table class="cmp">
+        <colgroup><col class="c1"><col><col></colgroup>
+        <thead><tr><th>Feature</th><th>ShareClick</th><th>Input Leap</th></tr></thead>
+        <tbody>
+          <tr><td>Price</td><td class="yes">Free &amp; open source</td><td class="yes">Free &amp; open source</td></tr>
+          <tr><td>Actively maintained</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+          <tr><td>Encryption</td><td class="win">On by default (X25519 + ChaCha20)</td><td>Optional (manual TLS)</td></tr>
+          <tr><td>Clipboard images</td><td class="yes">Yes</td><td>Text mainly</td></tr>
+          <tr><td>File transfer</td><td class="win">Yes</td><td>Limited / No</td></tr>
+          <tr><td>Auto discovery</td><td class="win">mDNS (no IPs)</td><td>Manual IP setup</td></tr>
+          <tr><td>Input transport</td><td class="win">UDP, ~6&nbsp;µs</td><td>TCP</td></tr>
+          <tr><td>Linux</td><td>Work in progress</td><td class="yes">Yes</td></tr>
+          <tr><td>Mac &amp; Windows</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+        </tbody>
+      </table>
+
+      <h2>which should you pick?</h2>
+      <div class="verdict">
+        <p><b>Choose ShareClick</b> for <b>Mac↔Windows</b> if you want encryption on by default, file
+        transfer, clipboard images and mDNS discovery out of the box, with the lowest input lag.</p>
+        <p><b>Choose Input Leap</b> if you need broad <b>Linux</b> support and a very mature,
+        multi-platform codebase.</p>
+      </div>
+
+      <p>Input Leap (and Barrier before it) proved how useful a software KVM is. ShareClick is the
+      newer, security-first take focused on Mac↔Windows: a UDP input path (~6&nbsp;µs transport
+      overhead), encryption on every channel, clipboard images, file transfer, and mDNS discovery.</p>
+
+      <div class="cta-inline">
+        <a class="btn" href="https://github.com/phun333/ShareClick/releases">Download ShareClick — free</a>
+        <a class="btn ghost" href="how-to-share-mouse-keyboard-mac-windows.html">Setup guide</a>
+      </div>
+    </article>
+  </div>
+
+  <footer>
+    <a href="./">shareclick</a> · <a href="vs-synergy.html">vs Synergy</a> ·
+    <a href="vs-sharemouse.html">vs ShareMouse</a> · <a href="vs-barrier.html">vs Barrier</a> ·
+    <a href="vs-mouse-without-borders.html">vs Mouse Without Borders</a> ·
+    <a href="https://github.com/phun333/ShareClick">GitHub</a> · MIT / Apache-2.0
+  </footer>
+</main>
+
+</body>
+</html>

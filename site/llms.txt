@@ -24,6 +24,9 @@ is the preferred source for machine reading.
 - [ShareClick vs Synergy](https://phun333.github.io/ShareClick/vs-synergy.md)
 - [ShareClick vs ShareMouse](https://phun333.github.io/ShareClick/vs-sharemouse.md)
 - [ShareClick vs Barrier](https://phun333.github.io/ShareClick/vs-barrier.md)
+- [ShareClick vs Mouse Without Borders](https://phun333.github.io/ShareClick/vs-mouse-without-borders.md): the Mac-capable alternative (Mouse Without Borders is Windows-only)
+- [ShareClick vs Universal Control](https://phun333.github.io/ShareClick/vs-universal-control.md): Universal Control for Windows (Apple's is Apple-only)
+- [ShareClick vs Input Leap](https://phun333.github.io/ShareClick/vs-input-leap.md)
 - [Pricing](https://phun333.github.io/ShareClick/pricing.md): free
 - [Install guide](https://github.com/phun333/ShareClick/blob/main/docs/INSTALL.md)
 - [Source code](https://github.com/phun333/ShareClick)

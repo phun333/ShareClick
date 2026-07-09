@@ -1,0 +1,39 @@
+# ShareClick vs Universal Control
+
+> Like Apple Universal Control, but across Mac and Windows. Share one keyboard,
+> mouse, clipboard and files between a Mac and a Windows PC. Free, open source,
+> encrypted. The practical "Universal Control for Windows".
+
+Apple's **Universal Control** lets one keyboard and mouse roam across a Mac and an
+iPad — but only inside Apple's ecosystem. There is **no Universal Control for
+Windows**. ShareClick gives you that same seamless feel between a **Mac and a
+Windows PC** — free, open source, and encrypted.
+
+| Feature | ShareClick | Universal Control |
+| --- | --- | --- |
+| Price | Free & open source | Free (built into macOS) |
+| Works with Windows | **Yes** | No (Apple devices only) |
+| Mac ↔ Windows | **Yes** | No |
+| Mac ↔ Mac / iPad | Any two computers | Yes |
+| Clipboard (text + images) | Yes | Yes |
+| File transfer | Yes (any pair) | Drag & drop (Apple only) |
+| Setup | Shared passphrase + screen edges | Same Apple ID / iCloud |
+| Open source | **Yes (MIT/Apache)** | No |
+| Encryption | X25519 + ChaCha20-Poly1305 | Apple end-to-end |
+
+## Which should you pick?
+
+- **Choose ShareClick** if one of your machines is a **Windows PC** — Universal
+  Control simply doesn't support Windows. It's the practical "Universal Control
+  for Windows".
+- **Choose Universal Control** if you only ever move between **Apple devices**
+  (Mac and iPad) on the same Apple ID.
+
+Universal Control is a lovely feature, but it stops at the edge of Apple's
+ecosystem. ShareClick delivers the same "push your cursor to the next screen"
+experience across **Mac↔Windows**, with clipboard sync, file transfer, encryption
+on every channel, and a UDP input path (~6 µs transport overhead) for the lowest
+possible lag.
+
+- [Download ShareClick (free)](https://github.com/phun333/ShareClick/releases)
+- [Setup guide](https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.md)
