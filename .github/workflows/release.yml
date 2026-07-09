@@ -41,7 +41,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Build release binary
-        run: cargo build --release --features tray
+        run: cargo build --release --features tray,gui
       - name: Build installer (Inno Setup)
         shell: pwsh
         run: |

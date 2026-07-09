@@ -138,13 +138,17 @@ fn spawn_connect() {
     });
 }
 
-/// Reveal / open the settings file (creating a starter if missing).
+/// Open the visual settings window (a separate `shareclick settings` process,
+/// so it has its own event loop). Falls back to opening the config file.
 fn open_settings(path: &PathBuf) {
-    if !path.exists() {
-        if let Err(e) = Config::example().save(path) {
-            eprintln!("could not create config: {e}");
+    if let Ok(exe) = std::env::current_exe() {
+        if std::process::Command::new(&exe).arg("settings").spawn().is_ok() {
             return;
         }
+    }
+    // Fallback: create + open the raw config file.
+    if !path.exists() {
+        let _ = Config::example().save(path);
     }
     let _ = open_path(path);
 }

@@ -23,8 +23,8 @@ echo "==> Building ShareClick $VERSION (features: tray)"
 
 build_universal() {
   rustup target add aarch64-apple-darwin x86_64-apple-darwin >/dev/null 2>&1 || true
-  if cargo build --release --features tray --target aarch64-apple-darwin \
-     && cargo build --release --features tray --target x86_64-apple-darwin; then
+  if cargo build --release --features tray,gui --target aarch64-apple-darwin \
+     && cargo build --release --features tray,gui --target x86_64-apple-darwin; then
     mkdir -p dist
     lipo -create -output "dist/$BIN_NAME" \
       "target/aarch64-apple-darwin/release/$BIN_NAME" \
@@ -37,7 +37,7 @@ build_universal() {
 
 if ! build_universal; then
   echo "   universal build unavailable; building for host arch only"
-  cargo build --release --features tray
+  cargo build --release --features tray,gui
   mkdir -p dist
   cp "target/release/$BIN_NAME" "dist/$BIN_NAME"
 fi

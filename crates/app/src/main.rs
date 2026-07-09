@@ -24,6 +24,8 @@ mod keymap;
 mod discovery;
 #[cfg(feature = "native")]
 mod run;
+#[cfg(feature = "gui")]
+mod gui;
 #[cfg(feature = "tray")]
 mod tray;
 
@@ -78,6 +80,8 @@ enum Command {
     Discover,
     /// Print the detected screen size (debug).
     ScreenInfo,
+    /// Open the visual settings & monitor-arrangement window.
+    Settings,
 }
 
 /// Hide the console window that Windows opens when the exe is double-clicked,
@@ -158,6 +162,12 @@ fn main() -> anyhow::Result<()> {
         }
         #[cfg(not(feature = "native"))]
         Command::ScreenInfo => anyhow::bail!("screen-info requires the `native` feature"),
+        #[cfg(feature = "gui")]
+        Command::Settings => gui::run(),
+        #[cfg(not(feature = "gui"))]
+        Command::Settings => {
+            anyhow::bail!("settings window not built in; rebuild with `--features gui`")
+        }
         #[cfg(feature = "tray")]
         Command::Tray => tray::run(),
         #[cfg(not(feature = "tray"))]

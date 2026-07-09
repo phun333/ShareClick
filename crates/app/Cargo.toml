@@ -32,6 +32,9 @@ mdns-sd = { version = "0.13", optional = true }
 tray-icon = { version = "0.20", optional = true }
 tao = { version = "0.30", optional = true }
 
+# Visual settings / monitor-arrangement window (egui).
+eframe = { version = "0.29", optional = true }
+
 # Windows-only: hide the console window when launched as the tray GUI.
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.59", features = ["Win32_System_Console", "Win32_UI_WindowsAndMessaging"] }
@@ -40,3 +43,4 @@ windows-sys = { version = "0.59", features = ["Win32_System_Console", "Win32_UI_
 default = ["native"]
 native = ["dep:enigo", "dep:rdev", "dep:arboard", "dep:mdns-sd"]
 tray = ["native", "dep:tray-icon", "dep:tao"]
+gui = ["native", "dep:eframe"]
