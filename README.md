@@ -5,7 +5,13 @@ the clipboard and files — between your macOS and Windows machines over the LAN
 with the lowest input lag we can squeeze out.
 
 Think ShareMouse / Synergy / Deskflow, but free, open, and built for latency
-first.
+first. A free **alternative to Synergy, ShareMouse, Barrier and Input Leap**, the
+Mac-capable answer to **Mouse Without Borders**, and effectively **Universal
+Control for Windows** — share one keyboard, mouse, clipboard and files across
+Mac and Windows over your LAN, end-to-end encrypted.
+
+**Website:** https://phun333.github.io/ShareClick/ · **What is a software KVM?**
+https://phun333.github.io/ShareClick/what-is-a-software-kvm.html
 
 ## Download & install (no Rust required)
 
@@ -15,6 +21,11 @@ Grab the installer for your OS from the
 - **macOS:** `ShareClick-*.dmg` → open, drag **ShareClick** to Applications, then
   grant **Accessibility** + **Input Monitoring**.
 - **Windows:** `ShareClick-Setup-*.exe` → run it (no admin needed).
+
+**Or via a package manager:**
+
+- **macOS (Homebrew):** `brew install --cask phun333/tap/shareclick`
+- **Windows (Scoop):** `scoop install https://raw.githubusercontent.com/phun333/ShareClick/main/packaging/scoop/shareclick.json`
 
 > ⚠️ **The builds are unsigned** (no paid Apple/Microsoft certificate), so your
 > OS shows a one-time warning. This is normal for open-source apps and easy to
@@ -32,6 +43,15 @@ shared screen edge to jump across; copy/paste and files sync automatically.
 👉 **Full step-by-step (macOS + Windows, UI and terminal): [docs/USAGE.md](./docs/USAGE.md).**
 
 Building from source is only needed for development — see [docs/](./docs/).
+
+## Compare with alternatives
+
+- [ShareClick vs Synergy](https://phun333.github.io/ShareClick/vs-synergy.html)
+- [ShareClick vs ShareMouse](https://phun333.github.io/ShareClick/vs-sharemouse.html)
+- [ShareClick vs Barrier](https://phun333.github.io/ShareClick/vs-barrier.html)
+- [ShareClick vs Input Leap](https://phun333.github.io/ShareClick/vs-input-leap.html)
+- [ShareClick vs Mouse Without Borders](https://phun333.github.io/ShareClick/vs-mouse-without-borders.html)
+- [ShareClick vs Universal Control](https://phun333.github.io/ShareClick/vs-universal-control.html)
 
 ## Documentation
 

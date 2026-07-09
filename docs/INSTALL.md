@@ -8,6 +8,22 @@ developer identity. Here's how to get past it. It only happens **once**.
 
 ---
 
+## Package managers (fastest)
+
+- **macOS (Homebrew):**
+  ```bash
+  brew install --cask phun333/tap/shareclick
+  ```
+  If macOS still blocks it: `xattr -cr "/Applications/ShareClick.app"`.
+- **Windows (Scoop):**
+  ```powershell
+  scoop install https://raw.githubusercontent.com/phun333/ShareClick/main/packaging/scoop/shareclick.json
+  ```
+
+Prefer the manual installers below if you don't use a package manager.
+
+---
+
 ## macOS
 
 ### 1. Install
