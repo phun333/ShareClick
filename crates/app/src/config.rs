@@ -29,6 +29,11 @@ pub struct Config {
     /// `connect` and the tray "Start Client" run without a CLI argument.
     #[serde(default)]
     pub server_host: Option<String>,
+    /// Arrangement offset (pixels): the *other* screen's top (for left/right
+    /// adjacency) or left (for top/bottom) relative to this screen's, so the
+    /// cursor crosses at the exact placed position. 0 = tops/edges aligned.
+    #[serde(default)]
+    pub offset: i32,
     /// The machines participating and their geometry/neighbours.
     pub machines: Vec<Machine>,
 }
@@ -100,6 +105,7 @@ impl Config {
             port: default_port(),
             auto_edge_switch: true,
             server_host: Some("192.168.1.20".into()),
+            offset: 0,
             machines: vec![
                 Machine {
                     name: "mac".into(),

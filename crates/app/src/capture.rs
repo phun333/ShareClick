@@ -195,11 +195,12 @@ pub fn run(
             if let EventType::MouseMove { x, y } = event.event_type {
                 let (xi, yi) = (x.round() as i32, y.round() as i32);
                 if let Some(edge) = edges.hit(xi, yi) {
-                    let frac = match edge {
-                        Edge::Left | Edge::Right => y as f32 / edges.height.max(1) as f32,
-                        Edge::Top | Edge::Bottom => x as f32 / edges.width.max(1) as f32,
+                    // Perpendicular pixel we left at (server-local).
+                    let perp = match edge {
+                        Edge::Left | Edge::Right => yi,
+                        Edge::Top | Edge::Bottom => xi,
                     };
-                    *control.entry.lock().unwrap() = Some((edge, frac));
+                    *control.entry.lock().unwrap() = Some((edge, perp));
                     control.active.store(true, Ordering::Relaxed);
                     tracing::info!(?edge, "cursor crossed edge; control handed to client");
                 }
@@ -218,7 +219,16 @@ pub fn run(
                 *last_pos.lock().unwrap() = Some((cx, cy));
             } else if !is_active && was {
                 mac_cursor::show_cursor();
-                mac_cursor::warp_to(cx, cy);
+                // Re-place our cursor where the client crossed back, so it
+                // returns at the matching spot (not the centre).
+                let (wx, wy) = match control.return_to.lock().unwrap().take() {
+                    Some((edge, perp)) => {
+                        let (px, py) = crate::edge::entry_point(edge, perp, screen.0, screen.1);
+                        (px as f64, py as f64)
+                    }
+                    None => (cx, cy),
+                };
+                mac_cursor::warp_to(wx, wy);
                 *last_pos.lock().unwrap() = None;
             }
         }

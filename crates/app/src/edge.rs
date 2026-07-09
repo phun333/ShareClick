@@ -55,9 +55,67 @@ impl EdgeConfig {
     }
 }
 
+/// Absolute pixel where the cursor should appear when control enters a screen
+/// of size `w`×`h` from `edge`, at perpendicular pixel `perp` along that edge
+/// (vertical for left/right, horizontal for top/bottom).
+pub fn entry_point(edge: Edge, perp: i32, w: u32, h: u32) -> (i32, i32) {
+    let (wi, hi) = (w as i32, h as i32);
+    let py = perp.clamp(0, hi - 1);
+    let px = perp.clamp(0, wi - 1);
+    match edge {
+        Edge::Left => (2, py),
+        Edge::Right => (wi - 3, py),
+        Edge::Top => (px, 2),
+        Edge::Bottom => (px, hi - 3),
+    }
+}
+
+/// The perpendicular axis length of `edge` on a `w`×`h` screen: height for a
+/// left/right edge, width for a top/bottom edge.
+pub fn perp_dim(edge: Edge, w: u32, h: u32) -> u32 {
+    match edge {
+        Edge::Left | Edge::Right => h,
+        Edge::Top | Edge::Bottom => w,
+    }
+}
+
+/// Map a perpendicular position on the SERVER's exit edge to the CLIENT's local
+/// entry position, given `offset` (the client screen's top/left relative to the
+/// server's, in server pixels). Clamped to the client's dimension.
+pub fn map_to_client(server_perp: i32, offset: i32, client_dim: u32) -> i32 {
+    (server_perp - offset).clamp(0, client_dim as i32 - 1)
+}
+
+/// Inverse of [`map_to_client`]: map the client's local exit position back to
+/// the server's local entry position.
+pub fn map_to_server(client_perp: i32, offset: i32, server_dim: u32) -> i32 {
+    (client_perp + offset).clamp(0, server_dim as i32 - 1)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn entry_point_lands_on_the_right_edge() {
+        // Enter the LEFT edge 400px down an 800px-tall screen.
+        assert_eq!(entry_point(Edge::Left, 400, 1000, 800), (2, 400));
+        // Enter the BOTTOM edge 250px across a 1000px-wide screen.
+        assert_eq!(entry_point(Edge::Bottom, 250, 1000, 800), (250, 797));
+        // Out-of-range perp is clamped onto the screen.
+        assert_eq!(entry_point(Edge::Left, 5000, 1000, 800), (2, 799));
+    }
+
+    #[test]
+    fn offset_mapping_is_reciprocal() {
+        // Client shifted DOWN by 200px relative to the server.
+        // Server leaves at y=500 => client enters at 500-200 = 300.
+        assert_eq!(map_to_client(500, 200, 1440), 300);
+        // Client leaves at y=300 => server enters at 300+200 = 500.
+        assert_eq!(map_to_server(300, 200, 956), 500);
+        // Beyond the client screen is clamped.
+        assert_eq!(map_to_client(100, 200, 1440), 0); // 100-200 = -100 -> 0
+    }
 
     #[test]
     fn detects_right_edge_only_when_neighbour_present() {

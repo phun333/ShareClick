@@ -30,6 +30,15 @@ impl Injector {
         Ok(Self { enigo })
     }
 
+    /// Warp the cursor to an absolute screen position (used when control enters
+    /// this machine, so the pointer appears where it crossed over).
+    pub fn move_to(&mut self, x: i32, y: i32) -> anyhow::Result<()> {
+        self.enigo
+            .move_mouse(x, y, Coordinate::Abs)
+            .map_err(|e| anyhow::anyhow!("move_to: {e:?}"))?;
+        Ok(())
+    }
+
     /// Apply one input event locally.
     pub fn apply(&mut self, ev: InputEvent) -> anyhow::Result<()> {
         match ev {

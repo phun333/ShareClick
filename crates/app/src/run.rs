@@ -37,6 +37,24 @@ fn release_all_modifiers() -> InputMsg {
     ])
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn crossing_maps_to_opposite_edge() {
+        assert_eq!(opposite(Edge::Right), Edge::Left);
+        assert_eq!(opposite(Edge::Left), Edge::Right);
+        assert_eq!(opposite(Edge::Top), Edge::Bottom);
+        assert_eq!(opposite(Edge::Bottom), Edge::Top);
+        // Leave the server's RIGHT edge at y=432 → enter the client's LEFT edge
+        // at y=432 on a 2560×1440 screen.
+        assert_eq!(entry_point(opposite(Edge::Right), 432, 2560, 1440), (2, 432));
+        // Leave BOTTOM at x=1440 → enter TOP at x=1440 on a 1920×1080 screen.
+        assert_eq!(entry_point(opposite(Edge::Bottom), 1440, 1920, 1080), (1440, 2));
+    }
+}
+
 /// The client enters from the edge opposite the one the server's cursor left by
 /// (leave the Mac's right edge → arrive at the PC's left edge).
 fn opposite(e: Edge) -> Edge {
@@ -55,7 +73,7 @@ use crate::config::Config;
 use crate::control::Control;
 use crate::discovery;
 use crate::cursor::CursorTracker;
-use crate::edge::EdgeConfig;
+use crate::edge::{entry_point, map_to_client, map_to_server, perp_dim, EdgeConfig};
 use crate::filexfer::FileReceiver;
 use crate::transport::InputChannel;
 
@@ -86,12 +104,34 @@ fn resolve(addr: &str) -> anyhow::Result<SocketAddr> {
         .ok_or_else(|| anyhow::anyhow!("could not resolve address {addr}"))
 }
 
+/// Persist a peer's reported screen size into our config, so the settings window
+/// can show the real remote resolution. The client reports it on connect (like
+/// Deskflow's DINF message).
+fn record_peer_screen(name: &str, screen: (u32, u32)) {
+    let path = Config::default_path();
+    if let Ok(mut cfg) = Config::load(&path) {
+        if let Some(m) = cfg.machines.iter_mut().find(|m| m.name == name) {
+            if m.screen != Some(screen) {
+                m.screen = Some(screen);
+                let _ = cfg.save(&path);
+                tracing::info!(%name, width = screen.0, height = screen.1, "recorded peer screen size");
+            }
+        }
+    }
+}
+
 /// Wire clipboard + file sync onto one (already-encrypted) bulk connection.
 /// Blocks on the reader loop; returns when the peer disconnects.
-fn serve_bulk(conn: BulkConn) -> anyhow::Result<()> {
+fn serve_bulk(conn: BulkConn, hello: Option<BulkMsg>) -> anyhow::Result<()> {
     let last = clipboard::shared_last();
     let (out_tx, out_rx) = mpsc::channel::<BulkMsg>();
     let (in_tx, in_rx) = mpsc::channel::<ClipboardData>();
+
+    // Send our own screen size first (client → server), before any other frame,
+    // so the encrypted send-counter stays in sync with the peer's recv-counter.
+    if let Some(h) = hello {
+        let _ = out_tx.send(h);
+    }
 
     let mut wconn = conn.try_clone()?;
     std::thread::spawn(move || {
@@ -119,6 +159,10 @@ fn serve_bulk(conn: BulkConn) -> anyhow::Result<()> {
                     tracing::warn!(error = %e, "file receive failed");
                 }
             }
+            // Peer told us its screen size — remember it for the settings window.
+            Ok(BulkMsg::Hello { name, screen, .. }) => {
+                record_peer_screen(&name, screen);
+            }
             Ok(_) => {}
             Err(_) => return Ok(()),
         }
@@ -132,6 +176,10 @@ fn run_server_input(
     udp: &InputChannel,
     rx: &Receiver<InputEvent>,
     control: &Control,
+    server_border: Edge,
+    offset: i32,
+    server_screen: (u32, u32),
+    client_screen: (u32, u32),
 ) -> anyhow::Result<()> {
     let mut peer: Option<SocketAddr> = None;
     let mut prev_active = false;
@@ -146,10 +194,15 @@ fn run_server_input(
                 InputMsg::Ping { nonce, echo_nanos } => {
                     let _ = udp.send_to(InputMsg::Pong { nonce, echo_nanos }, from);
                 }
-                // Client's cursor crossed back over the border → reclaim.
-                InputMsg::Leave => {
+                // Client's cursor crossed back over the border → reclaim, and
+                // map its exit pixel through the offset so our cursor re-appears
+                // at the matching spot.
+                InputMsg::Leave { pos } => {
+                    let sdim = perp_dim(server_border, server_screen.0, server_screen.1);
+                    let server_perp = map_to_server(pos, offset, sdim);
+                    *control.return_to.lock().unwrap() = Some((server_border, server_perp));
                     control.active.store(false, Ordering::Relaxed);
-                    tracing::info!("client returned control");
+                    tracing::info!(pos, server_perp, "client returned control");
                 }
                 _ => {}
             }
@@ -165,11 +218,15 @@ fn run_server_input(
                     // Only ask the client to track a return border when control
                     // was handed over by an actual edge crossing. Manual toggles
                     // (both-Shift / F12) send nothing — the user toggles back.
-                    if let Some((edge, entry)) = *control.entry.lock().unwrap() {
-                        let _ = udp.send_to(InputMsg::Enter { edge: opposite(edge), entry }, p);
+                    if let Some((edge, server_perp)) = *control.entry.lock().unwrap() {
+                        // Apply the arrangement offset here so the client stays
+                        // dumb (it just warps to the pixel we send).
+                        let cdim = perp_dim(edge, client_screen.0, client_screen.1);
+                        let pos = map_to_client(server_perp, offset, cdim);
+                        let _ = udp.send_to(InputMsg::Enter { edge: opposite(edge), pos }, p);
                     }
                 } else {
-                    let _ = udp.send_to(InputMsg::Leave, p);
+                    let _ = udp.send_to(InputMsg::Leave { pos: 0 }, p);
                 }
             }
             prev_active = active;
@@ -208,6 +265,33 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
         }
         _ => EdgeConfig::none(),
     };
+    // Our single bordered edge (where the client sits) — used to re-place our
+    // cursor at the matching spot when control returns.
+    let server_border = cfg
+        .machine(&cfg.name)
+        .and_then(|m| {
+            if m.right.is_some() {
+                Some(Edge::Right)
+            } else if m.left.is_some() {
+                Some(Edge::Left)
+            } else if m.top.is_some() {
+                Some(Edge::Top)
+            } else if m.bottom.is_some() {
+                Some(Edge::Bottom)
+            } else {
+                None
+            }
+        })
+        .unwrap_or(Edge::Right);
+    // Arrangement offset + the client's recorded screen size, for seamless,
+    // offset-aware edge crossings.
+    let offset = cfg.offset;
+    let client_screen = cfg
+        .machines
+        .iter()
+        .find(|m| m.name != cfg.name)
+        .and_then(|m| m.screen)
+        .unwrap_or((1920, 1080));
 
     // Capture runs once, globally, feeding a channel. Control starts local.
     let (tx, rx) = mpsc::channel();
@@ -240,13 +324,15 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
 
         // Bulk channel (clipboard/files) in the background.
         std::thread::spawn(move || {
-            let _ = serve_bulk(conn);
+            let _ = serve_bulk(conn, None);
         });
 
         // Encrypted UDP input channel for this session.
         let udp = InputChannel::bind(bind_addr, None)?.with_cipher(Arc::new(input_sess));
         udp.set_read_timeout(Some(Duration::from_millis(1)))?;
-        if let Err(e) = run_server_input(&udp, &rx, &control) {
+        if let Err(e) =
+            run_server_input(&udp, &rx, &control, server_border, offset, (sw, sh), client_screen)
+        {
             tracing::warn!(error = %e, "input session ended; awaiting new client");
         }
     }
@@ -277,9 +363,16 @@ pub fn connect(server: Option<&str>) -> anyhow::Result<()> {
         BulkConn::handshake(stream, &psk, Role::Initiator)?;
     tracing::info!("authenticated with server (encrypted session established)");
 
-    // Bulk channel (clipboard/files).
+    // Bulk channel (clipboard/files). Announce our screen size to the server so
+    // its settings window can show our real resolution.
+    let (cw, ch) = screen_size(&cfg);
+    let hello = BulkMsg::Hello {
+        version: shareclick_protocol::PROTOCOL_VERSION,
+        name: cfg.name.clone(),
+        screen: (cw, ch),
+    };
     std::thread::spawn(move || {
-        if let Err(e) = serve_bulk(conn) {
+        if let Err(e) = serve_bulk(conn, Some(hello)) {
             tracing::warn!(error = %e, "bulk channel closed");
         }
     });
@@ -303,12 +396,16 @@ pub fn connect(server: Option<&str>) -> anyhow::Result<()> {
     loop {
         match channel.recv(&mut buf) {
             Ok(Some((pkt, _))) => match pkt.msg {
-                InputMsg::Enter { edge, entry } => {
-                    tracker.enter(edge, entry);
+                InputMsg::Enter { edge, pos } => {
+                    tracker.enter(edge, pos);
                     controlling = true;
-                    tracing::info!(?edge, "gained control from server");
+                    // Warp the real cursor to the exact spot the server sent
+                    // (already offset-adjusted), so it appears where it crossed.
+                    let (ex, ey) = entry_point(edge, pos, cw, ch);
+                    let _ = injector.move_to(ex, ey);
+                    tracing::info!(?edge, ex, ey, "gained control from server");
                 }
-                InputMsg::Leave => {
+                InputMsg::Leave { .. } => {
                     tracker.leave();
                     controlling = false;
                     tracing::info!("server revoked control");
@@ -316,11 +413,15 @@ pub fn connect(server: Option<&str>) -> anyhow::Result<()> {
                 InputMsg::Events(events) => {
                     for ev in events {
                         if let InputEvent::MouseMove { dx, dy } = ev {
-                            if controlling && tracker.moved(dx, dy) {
-                                // Cursor left back toward the server → return it.
-                                controlling = false;
-                                let _ = channel.send(InputMsg::Leave);
-                                tracing::info!("cursor hit border; returning control");
+                            if controlling {
+                                if let Some(perp) = tracker.moved(dx, dy) {
+                                    // Cursor crossed back → return control, telling
+                                    // the server the exit pixel so its cursor
+                                    // re-appears at the matching spot.
+                                    controlling = false;
+                                    let _ = channel.send(InputMsg::Leave { pos: perp });
+                                    tracing::info!(perp, "cursor hit border; returning control");
+                                }
                             }
                         }
                         if let Err(e) = injector.apply(ev) {

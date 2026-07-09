@@ -10,6 +10,110 @@ use eframe::egui;
 
 use crate::config::{Config, Machine};
 
+/// Distance between the two monitor centres along the shared edge (canvas px).
+fn adjacency(side: Side, this: egui::Vec2, other: egui::Vec2) -> f32 {
+    let gap = 3.0;
+    match side {
+        Side::Left | Side::Right => this.x / 2.0 + other.x / 2.0 + gap,
+        Side::Top | Side::Bottom => this.y / 2.0 + other.y / 2.0 + gap,
+    }
+}
+
+/// Second monitor's centre relative to the first, for a given side + offset.
+fn seed_rel(side: Side, offset_canvas: f32, this: egui::Vec2, other: egui::Vec2) -> egui::Vec2 {
+    let adj = adjacency(side, this, other);
+    let perp_y = offset_canvas + (other.y - this.y) / 2.0;
+    let perp_x = offset_canvas + (other.x - this.x) / 2.0;
+    match side {
+        Side::Right => egui::vec2(adj, perp_y),
+        Side::Left => egui::vec2(-adj, perp_y),
+        Side::Bottom => egui::vec2(perp_x, adj),
+        Side::Top => egui::vec2(perp_x, -adj),
+    }
+}
+
+/// Snap the parallel axis to adjacency; keep the perpendicular (offset) axis.
+fn snap_rel(side: Side, rel: egui::Vec2, this: egui::Vec2, other: egui::Vec2) -> egui::Vec2 {
+    let adj = adjacency(side, this, other);
+    match side {
+        Side::Right => egui::vec2(adj, rel.y),
+        Side::Left => egui::vec2(-adj, rel.y),
+        Side::Bottom => egui::vec2(rel.x, adj),
+        Side::Top => egui::vec2(rel.x, -adj),
+    }
+}
+
+/// Real-pixel offset (other screen's top/left vs this screen's) from placement.
+fn offset_from_rel(side: Side, rel: egui::Vec2, this: egui::Vec2, other: egui::Vec2, scale: f32) -> i32 {
+    let off_canvas = match side {
+        Side::Left | Side::Right => rel.y - (other.y - this.y) / 2.0,
+        Side::Top | Side::Bottom => rel.x - (other.x - this.x) / 2.0,
+    };
+    if scale <= 0.0 { 0 } else { (off_canvas / scale).round() as i32 }
+}
+
+fn dominant_side(rel: egui::Vec2) -> Side {
+    if rel.x.abs() > rel.y.abs() {
+        if rel.x > 0.0 { Side::Right } else { Side::Left }
+    } else if rel.y > 0.0 {
+        Side::Bottom
+    } else {
+        Side::Top
+    }
+}
+
+/// Set one edge of a machine to point at `neighbour`.
+fn set_side(m: &mut Machine, side: Side, neighbour: &str) {
+    match side {
+        Side::Left => m.left = Some(neighbour.into()),
+        Side::Right => m.right = Some(neighbour.into()),
+        Side::Top => m.top = Some(neighbour.into()),
+        Side::Bottom => m.bottom = Some(neighbour.into()),
+    }
+}
+
+/// Build the two machine entries for an arrangement: `this` borders `other` on
+/// `side`, and reciprocally `other` borders `this` on the opposite side. Pure so
+/// it can be unit-tested without the GUI.
+fn layout(this_name: &str, other_name: &str, other_res: (u32, u32), side: Side) -> (Machine, Machine) {
+    let mut this = Machine {
+        name: this_name.into(),
+        screen: None,
+        left: None,
+        right: None,
+        top: None,
+        bottom: None,
+    };
+    let mut other = Machine {
+        name: other_name.into(),
+        screen: Some(other_res),
+        left: None,
+        right: None,
+        top: None,
+        bottom: None,
+    };
+    set_side(&mut this, side, other_name);
+    set_side(&mut other, side.opposite(), this_name);
+    (this, other)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn arrangement_maps_to_reciprocal_neighbours() {
+        let (t, o) = layout("mac", "win", (2560, 1440), Side::Right);
+        assert_eq!(t.right.as_deref(), Some("win"));
+        assert_eq!(o.left.as_deref(), Some("mac"));
+        assert!(t.left.is_none() && t.top.is_none() && t.bottom.is_none());
+        assert_eq!(o.screen, Some((2560, 1440)));
+        assert!(t.screen.is_none());
+        let (t, o) = layout("mac", "win", (1920, 1080), Side::Top);
+        assert_eq!(t.top.as_deref(), Some("win"));
+        assert_eq!(o.bottom.as_deref(), Some("mac"));
+    }
+}
+
 /// Launch the settings window (blocks until closed).
 pub fn run() -> anyhow::Result<()> {
     let options = eframe::NativeOptions {
@@ -22,7 +126,19 @@ pub fn run() -> anyhow::Result<()> {
     eframe::run_native(
         "ShareClick Settings",
         options,
-        Box::new(|_cc| Ok(Box::new(SettingsApp::new()))),
+        Box::new(|cc| {
+            // Clean light theme with the ShareClick blue accent.
+            cc.egui_ctx.set_visuals(egui::Visuals::light());
+            let mut style = (*cc.egui_ctx.style()).clone();
+            style.spacing.item_spacing = egui::vec2(10.0, 10.0);
+            style.spacing.button_padding = egui::vec2(12.0, 6.0);
+            let blue = egui::Color32::from_rgb(0x2b, 0x7a, 0xff);
+            style.visuals.selection.bg_fill = blue;
+            style.visuals.hyperlink_color = blue;
+            style.visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1.0, blue);
+            cc.egui_ctx.set_style(style);
+            Ok(Box::new(SettingsApp::new()))
+        }),
     )
     .map_err(|e| anyhow::anyhow!("settings window failed: {e}"))
 }
@@ -56,8 +172,14 @@ struct SettingsApp {
     other_h: String,
     /// Where the second monitor sits relative to the first.
     side: Side,
-    /// Free-drag offset of the second monitor (canvas px); snapped on release.
+    /// Second monitor's centre relative to the first's (canvas px). The parallel
+    /// axis is snapped to the chosen side; the perpendicular axis is the offset.
     drag: egui::Vec2,
+    /// Perpendicular offset in real pixels (the other screen's top/left relative
+    /// to this screen's), written to the config.
+    offset: i32,
+    /// Have we seeded `drag` from the saved offset yet?
+    placed: bool,
     status: String,
 }
 
@@ -67,7 +189,7 @@ impl SettingsApp {
         let this_res = crate::emit::main_display_size().unwrap_or((1470, 956));
 
         // Derive current arrangement from an existing config, if any.
-        let (this_name, other_name, side, other_res, psk, port, server_host) = match &cfg {
+        let (this_name, other_name, side, other_res, psk, port, server_host, offset) = match &cfg {
             Some(c) => {
                 let this = c.name.clone();
                 let other = c
@@ -102,6 +224,7 @@ impl SettingsApp {
                     c.psk.clone(),
                     c.port.to_string(),
                     c.server_host.clone().unwrap_or_default(),
+                    c.offset,
                 )
             }
             None => (
@@ -112,6 +235,7 @@ impl SettingsApp {
                 "change-me-to-a-long-passphrase".into(),
                 "24800".into(),
                 String::new(),
+                0,
             ),
         };
 
@@ -126,6 +250,8 @@ impl SettingsApp {
             other_h: other_res.1.to_string(),
             side,
             drag: egui::Vec2::ZERO,
+            offset,
+            placed: false,
             status: String::new(),
         }
     }
@@ -136,30 +262,8 @@ impl SettingsApp {
             self.other_w.trim().parse().unwrap_or(1920),
             self.other_h.trim().parse().unwrap_or(1080),
         );
-        let set_side = |m: &mut Machine, side: Side, neighbor: &str| match side {
-            Side::Left => m.left = Some(neighbor.into()),
-            Side::Right => m.right = Some(neighbor.into()),
-            Side::Top => m.top = Some(neighbor.into()),
-            Side::Bottom => m.bottom = Some(neighbor.into()),
-        };
-        let mut this = Machine {
-            name: self.this_name.trim().into(),
-            screen: None, // auto-detected at runtime
-            left: None,
-            right: None,
-            top: None,
-            bottom: None,
-        };
-        let mut other = Machine {
-            name: self.other_name.trim().into(),
-            screen: Some(other_res),
-            left: None,
-            right: None,
-            top: None,
-            bottom: None,
-        };
-        set_side(&mut this, self.side, &other.name);
-        set_side(&mut other, self.side.opposite(), &this.name);
+        let (this, other) =
+            layout(self.this_name.trim(), self.other_name.trim(), other_res, self.side);
 
         let cfg = Config {
             name: this.name.clone(),
@@ -174,6 +278,7 @@ impl SettingsApp {
                     Some(s.to_string())
                 }
             },
+            offset: self.offset,
             machines: vec![this, other],
         };
         cfg.validate()?;
@@ -241,80 +346,75 @@ impl eframe::App for SettingsApp {
 
 impl SettingsApp {
     fn arrangement(&mut self, ui: &mut egui::Ui) {
-        let (canvas, _) = ui.allocate_exact_size(egui::vec2(500.0, 260.0), egui::Sense::hover());
+        let (canvas, _) = ui.allocate_exact_size(egui::vec2(500.0, 280.0), egui::Sense::hover());
         let painter = ui.painter_at(canvas);
-        painter.rect_filled(canvas, 6.0, egui::Color32::from_gray(28));
+        painter.rect_filled(canvas, 10.0, egui::Color32::from_gray(238));
+        painter.rect_stroke(canvas, 10.0, egui::Stroke::new(1.0, egui::Color32::from_gray(220)));
 
-        // Scale so both monitors fit side by side with margin.
-        let other_res = (
+        let this_res = egui::vec2(self.this_res.0 as f32, self.this_res.1 as f32);
+        let other_res = egui::vec2(
             self.other_w.trim().parse().unwrap_or(1920) as f32,
             self.other_h.trim().parse().unwrap_or(1080) as f32,
         );
-        let total_w = self.this_res.0 as f32 + other_res.0 + 400.0;
-        let scale = (canvas.width() / total_w).min(canvas.height() / (self.this_res.1 as f32 + 200.0));
-        let this_size = egui::vec2(self.this_res.0 as f32 * scale, self.this_res.1 as f32 * scale);
-        let other_size = egui::vec2(other_res.0 * scale, other_res.1 * scale);
 
-        // "This" monitor fixed at centre.
-        let center = canvas.center();
-        let this_rect = egui::Rect::from_center_size(center, this_size);
+        // Scale so BOTH monitors fit inside the canvas, whatever side they're on.
+        let bbox = egui::vec2(this_res.x + other_res.x, this_res.y + other_res.y);
+        let margin = 0.72;
+        let scale = (canvas.width() * margin / bbox.x).min(canvas.height() * margin / bbox.y);
+        let this_size = this_res * scale;
+        let other_size = other_res * scale;
 
-        // "Other" monitor position: snapped side + live drag.
-        let snap_center = snapped_center(center, this_size, other_size, self.side);
-        let other_center = snap_center + self.drag;
+        // Seed the relative placement from the saved side + offset (once).
+        if !self.placed {
+            self.drag = seed_rel(self.side, self.offset as f32 * scale, this_size, other_size);
+            self.placed = true;
+        }
+        // Centre the pair in the canvas.
+        let this_center = canvas.center() - self.drag / 2.0;
+        let other_center = this_center + self.drag;
+        let this_rect = egui::Rect::from_center_size(this_center, this_size);
         let other_rect = egui::Rect::from_center_size(other_center, other_size);
 
-        // Draw this monitor.
-        painter.rect_filled(this_rect, 4.0, egui::Color32::from_rgb(0x2b, 0x7a, 0xff));
-        painter.text(
-            this_rect.center(),
-            egui::Align2::CENTER_CENTER,
-            format!("{}\n{}×{}", self.this_name, self.this_res.0, self.this_res.1),
-            egui::FontId::proportional(13.0),
-            egui::Color32::WHITE,
-        );
+        let blue = egui::Color32::from_rgb(0x2b, 0x7a, 0xff);
+        let label = |p: &egui::Painter, r: egui::Rect, name: &str, w: u32, h: u32, col| {
+            p.text(
+                r.center() - egui::vec2(0.0, 7.0),
+                egui::Align2::CENTER_CENTER,
+                name,
+                egui::FontId::proportional(13.0),
+                col,
+            );
+            p.text(
+                r.center() + egui::vec2(0.0, 9.0),
+                egui::Align2::CENTER_CENTER,
+                format!("{w}×{h}"),
+                egui::FontId::proportional(11.0),
+                col,
+            );
+        };
 
-        // Draggable other monitor.
+        // This monitor (blue, fixed).
+        painter.rect_filled(this_rect, 6.0, blue);
+        label(&painter, this_rect, &self.this_name, self.this_res.0, self.this_res.1, egui::Color32::WHITE);
+
+        // Other monitor (draggable, grey).
         let resp = ui.interact(other_rect, ui.make_persistent_id("other_mon"), egui::Sense::drag());
         if resp.dragged() {
             self.drag += resp.drag_delta();
         }
         if resp.drag_stopped() {
-            // Snap to the nearest side of "this".
-            let d = other_center - center;
-            self.side = if d.x.abs() > d.y.abs() {
-                if d.x > 0.0 { Side::Right } else { Side::Left }
-            } else if d.y > 0.0 {
-                Side::Bottom
-            } else {
-                Side::Top
-            };
-            self.drag = egui::Vec2::ZERO;
+            self.side = dominant_side(self.drag);
+            self.drag = snap_rel(self.side, self.drag, this_size, other_size);
         }
+        // Keep the saved offset in sync with the current placement.
+        self.offset = offset_from_rel(self.side, self.drag, this_size, other_size, scale);
         let fill = if resp.dragged() {
-            egui::Color32::from_gray(150)
+            egui::Color32::from_gray(120)
         } else {
-            egui::Color32::from_gray(110)
+            egui::Color32::from_gray(150)
         };
-        painter.rect_filled(other_rect, 4.0, fill);
-        painter.rect_stroke(other_rect, 4.0, egui::Stroke::new(1.0, egui::Color32::WHITE));
-        painter.text(
-            other_rect.center(),
-            egui::Align2::CENTER_CENTER,
-            format!("{}\n{}×{}", self.other_name, other_res.0 as u32, other_res.1 as u32),
-            egui::FontId::proportional(13.0),
-            egui::Color32::WHITE,
-        );
-    }
-}
-
-/// Centre point for the second monitor snapped to `side` of the first.
-fn snapped_center(center: egui::Pos2, this: egui::Vec2, other: egui::Vec2, side: Side) -> egui::Pos2 {
-    let gap = 2.0;
-    match side {
-        Side::Right => center + egui::vec2(this.x / 2.0 + other.x / 2.0 + gap, 0.0),
-        Side::Left => center - egui::vec2(this.x / 2.0 + other.x / 2.0 + gap, 0.0),
-        Side::Bottom => center + egui::vec2(0.0, this.y / 2.0 + other.y / 2.0 + gap),
-        Side::Top => center - egui::vec2(0.0, this.y / 2.0 + other.y / 2.0 + gap),
+        painter.rect_filled(other_rect, 6.0, fill);
+        painter.rect_stroke(other_rect, 6.0, egui::Stroke::new(1.5, egui::Color32::from_gray(90)));
+        label(&painter, other_rect, &self.other_name, other_res.x as u32, other_res.y as u32, egui::Color32::WHITE);
     }
 }

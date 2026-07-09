@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 pub mod crypto;
 
 /// Protocol version. Bump on breaking wire changes.
-pub const PROTOCOL_VERSION: u16 = 1;
+pub const PROTOCOL_VERSION: u16 = 2;
 
 /// Screen edge a cursor can cross to hand control to a neighbour.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -81,11 +81,15 @@ pub enum InputMsg {
     /// packet count at high polling rates and avoids the classic "jumpiness"
     /// when mouse rate exceeds display refresh).
     Events(Vec<InputEvent>),
-    /// Control handed to this client because the cursor crossed `edge`.
-    /// `entry` is the normalized 0.0..1.0 position along the crossed edge.
-    Enter { edge: Edge, entry: f32 },
-    /// Control returned to the server; client should release/hide its cursor.
-    Leave,
+    /// Control handed to this client. `pos` is the client-local perpendicular
+    /// pixel (vertical for left/right edges, horizontal for top/bottom) where
+    /// the cursor should appear — the server already applied the arrangement
+    /// offset, so the client just warps there.
+    Enter { edge: Edge, pos: i32 },
+    /// Control returns to the server. `pos` is the *client-local* perpendicular
+    /// pixel where the cursor crossed back; the server maps it through the
+    /// offset to place its own cursor at the matching spot.
+    Leave { pos: i32 },
     /// Latency probe. `echo_nanos` mirrors the sender's monotonic clock.
     Ping { nonce: u64, echo_nanos: u64 },
     /// Reply to a [`InputMsg::Ping`].
