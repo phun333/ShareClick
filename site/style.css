@@ -68,20 +68,14 @@ h1{font-size:clamp(72px,15vw,180px);font-weight:800;letter-spacing:-.045em;line-
 
 .faq{max-width:640px;margin:60px auto 40px;padding:0 24px}
 .faq h2{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0 0 10px;text-align:center;color:var(--ink)}
-.faq details{border-bottom:1px solid var(--line);padding:14px 2px}
+.faq details{border-bottom:1px solid var(--line);padding:12px 2px}
 .faq summary{cursor:pointer;font-weight:500;font-size:14px;list-style:none;display:flex;justify-content:space-between;gap:12px;color:var(--ink);
   transition:color .15s ease}
 .faq summary::-webkit-details-marker{display:none}
 .faq summary::after{content:"+";color:var(--muted);transition:transform .2s var(--ease-out),color .15s ease}
 .faq details[open] summary::after{transform:rotate(45deg)}
 @media (hover:hover) and (pointer:fine){.faq summary:hover,.faq summary:hover::after{color:var(--ink)}}
-.faq p{margin:10px 0 2px;color:var(--muted);font-size:13.5px}
-/* smooth expand (progressive enhancement — no-op in older browsers) */
-.faq details::details-content{
-  block-size:0;overflow:hidden;
-  transition:block-size .28s var(--ease-out),content-visibility .28s allow-discrete;
-}
-.faq details[open]::details-content{block-size:auto}
+.faq p{margin:8px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
 
 /* internal-link row on the homepage */
 .compare{text-align:center;color:var(--muted);font-size:13px;margin:0 auto 30px}
@@ -134,15 +128,12 @@ footer a:hover{color:var(--ink)}
 .feat > div:nth-child(4){animation-delay:.48s}
 .feat > div:nth-child(5){animation-delay:.52s}
 .feat > div:nth-child(6){animation-delay:.56s}
-.slider .knob{animation:knob 2.4s var(--ease-in-out) infinite alternate}
-@keyframes knob{from{transform:translateX(0)}to{transform:translateX(20px)}}
 
 /* respect reduced motion — keep gentle fades, drop movement */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
     transition-duration:.01ms!important;scroll-behavior:auto!important}
   .hero h1,.hero .tag,.hero .cta,.hero .sub,.hero .facts,.feat > div{opacity:1;transform:none}
-  .slider .knob{animation:none}
 }
 
 @media(max-width:680px){
