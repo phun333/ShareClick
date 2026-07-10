@@ -22,6 +22,9 @@ pub struct CursorTracker {
     y: i32,
     border: Option<Edge>,
     armed: bool,
+    /// Inclusive span along the border edge where crossing back is allowed (the
+    /// overlap with the server's screen). Outside it the edge is a wall.
+    span: (i32, i32),
 }
 
 impl CursorTracker {
@@ -33,12 +36,13 @@ impl CursorTracker {
             y: 0,
             border: None,
             armed: false,
+            span: (0, i32::MAX),
         }
     }
 
     /// The client gained control, entering from `edge` at perpendicular pixel
     /// `perp` (vertical for left/right, horizontal for top/bottom).
-    pub fn enter(&mut self, edge: Edge, perp: i32) {
+    pub fn enter(&mut self, edge: Edge, perp: i32, span: (i32, i32)) {
         let py = perp.clamp(0, self.h - 1);
         let px = perp.clamp(0, self.w - 1);
         let (x, y) = match edge {
@@ -51,6 +55,7 @@ impl CursorTracker {
         self.y = y;
         self.border = Some(edge);
         self.armed = false;
+        self.span = span;
     }
 
     /// The client lost control (server revoked it).
@@ -110,8 +115,10 @@ impl CursorTracker {
         };
 
         self.store(nx, ny);
-        if returned {
-            let perp = self.exit_perp();
+        // Only cross back where the two screens overlap, so the edge is a wall
+        // elsewhere (real adjacent-monitor behaviour).
+        let perp = self.exit_perp();
+        if returned && perp >= self.span.0 && perp <= self.span.1 {
             self.border = None;
             self.armed = false;
             Some(perp)
@@ -133,16 +140,28 @@ mod tests {
     #[test]
     fn returns_after_moving_in_then_back_out_left() {
         let mut t = CursorTracker::new(1920, 1080);
-        t.enter(Edge::Left, 540);
+        t.enter(Edge::Left, 540, (0, 1080));
         assert!(t.moved(100, 0).is_none()); // move inward → arms
         assert!(t.moved(-50, 0).is_none()); // partway back
         assert!(t.moved(-100, 0).is_some()); // cross the left border → return
     }
 
     #[test]
+    fn does_not_return_outside_the_overlap_span() {
+        // Border edge is TOP; overlap is only x in [545, 2015].
+        let mut t = CursorTracker::new(2560, 1440);
+        t.enter(Edge::Top, 100, (545, 2015)); // enter near the left wall
+        assert!(t.moved(0, 100).is_none()); // move down → arms
+        // Shove back up at x=100 (outside the span) → wall, no return.
+        assert!(t.moved(0, -300).is_none());
+        // Slide right into the span, still at the top edge → now it returns.
+        assert!(t.moved(600, 0).is_some());
+    }
+
+    #[test]
     fn does_not_return_before_arming() {
         let mut t = CursorTracker::new(1920, 1080);
-        t.enter(Edge::Left, 540);
+        t.enter(Edge::Left, 540, (0, 1080));
         // Immediately shoving left (never moved inward) must not bounce back.
         assert!(t.moved(-50, 0).is_none());
     }
@@ -150,7 +169,7 @@ mod tests {
     #[test]
     fn returns_across_right_border() {
         let mut t = CursorTracker::new(1000, 800);
-        t.enter(Edge::Right, 400);
+        t.enter(Edge::Right, 400, (0, 800));
         assert!(t.moved(-200, 0).is_none()); // inward (left) arms
         assert!(t.moved(300, 0).is_some()); // back out the right edge
     }

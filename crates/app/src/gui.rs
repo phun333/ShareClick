@@ -308,12 +308,18 @@ impl eframe::App for SettingsApp {
                 ui.label("Server host (client only)");
                 ui.add(egui::TextEdit::singleline(&mut self.server_host).hint_text("blank = auto-discover"));
                 ui.end_row();
-                ui.label("Other screen size");
-                ui.horizontal(|ui| {
-                    ui.add(egui::TextEdit::singleline(&mut self.other_w).desired_width(60.0));
-                    ui.label("×");
-                    ui.add(egui::TextEdit::singleline(&mut self.other_h).desired_width(60.0));
-                });
+                // Resolutions are never typed by hand: this machine is detected
+                // live, and the other machine reports its size on connect (like
+                // Deskflow's DINF). Shown read-only so they can't drift.
+                ui.label("This screen");
+                ui.label(format!("{} × {}  · auto-detected", self.this_res.0, self.this_res.1));
+                ui.end_row();
+                ui.label("Other screen");
+                ui.label(format!(
+                    "{} × {}  · reported on connect",
+                    self.other_w.trim(),
+                    self.other_h.trim()
+                ));
                 ui.end_row();
             });
 

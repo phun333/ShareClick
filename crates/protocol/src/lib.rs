@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 pub mod crypto;
 
 /// Protocol version. Bump on breaking wire changes.
-pub const PROTOCOL_VERSION: u16 = 2;
+pub const PROTOCOL_VERSION: u16 = 3;
 
 /// Screen edge a cursor can cross to hand control to a neighbour.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -84,8 +84,15 @@ pub enum InputMsg {
     /// Control handed to this client. `pos` is the client-local perpendicular
     /// pixel (vertical for left/right edges, horizontal for top/bottom) where
     /// the cursor should appear — the server already applied the arrangement
-    /// offset, so the client just warps there.
-    Enter { edge: Edge, pos: i32 },
+    /// offset, so the client just warps there. `span` is the inclusive range
+    /// along the client's border edge where it may cross back (the overlap with
+    /// the server's screen); outside it the edge is a wall, so the two machines
+    /// behave like real adjacent monitors.
+    Enter {
+        edge: Edge,
+        pos: i32,
+        span: (i32, i32),
+    },
     /// Control returns to the server. `pos` is the *client-local* perpendicular
     /// pixel where the cursor crossed back; the server maps it through the
     /// offset to place its own cursor at the matching spot.

@@ -14,7 +14,7 @@
 use std::net::{SocketAddr, TcpListener, TcpStream, ToSocketAddrs};
 use std::sync::atomic::Ordering;
 use std::sync::mpsc::{self, Receiver};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use shareclick_protocol::crypto::{Role, Session};
@@ -73,7 +73,9 @@ use crate::config::Config;
 use crate::control::Control;
 use crate::discovery;
 use crate::cursor::CursorTracker;
-use crate::edge::{entry_point, map_to_client, map_to_server, perp_dim, EdgeConfig};
+use crate::edge::{
+    client_return_span, entry_point, map_to_client, map_to_server, perp_dim, EdgeConfig,
+};
 use crate::filexfer::FileReceiver;
 use crate::transport::InputChannel;
 
@@ -89,13 +91,14 @@ fn load_config() -> anyhow::Result<Config> {
     Config::load(&path)
 }
 
-/// This machine's screen size: a config override if set, else auto-detected
-/// from the OS, else a safe fallback.
+/// This machine's screen size. Always prefer the LIVE OS-detected size so a
+/// stale value in the config can never break edge detection or the offset math;
+/// a config `screen` is only a fallback when detection isn't available.
 fn screen_size(cfg: &Config) -> (u32, u32) {
-    if let Some(s) = cfg.machine(&cfg.name).and_then(|m| m.screen) {
-        return s;
-    }
-    crate::emit::main_display_size().unwrap_or((1920, 1080))
+    crate::emit::main_display_size()
+        .ok()
+        .or_else(|| cfg.machine(&cfg.name).and_then(|m| m.screen))
+        .unwrap_or((1920, 1080))
 }
 
 fn resolve(addr: &str) -> anyhow::Result<SocketAddr> {
@@ -122,7 +125,11 @@ fn record_peer_screen(name: &str, screen: (u32, u32)) {
 
 /// Wire clipboard + file sync onto one (already-encrypted) bulk connection.
 /// Blocks on the reader loop; returns when the peer disconnects.
-fn serve_bulk(conn: BulkConn, hello: Option<BulkMsg>) -> anyhow::Result<()> {
+fn serve_bulk(
+    conn: BulkConn,
+    hello: Option<BulkMsg>,
+    peer_screen: Option<Arc<Mutex<(u32, u32)>>>,
+) -> anyhow::Result<()> {
     let last = clipboard::shared_last();
     let (out_tx, out_rx) = mpsc::channel::<BulkMsg>();
     let (in_tx, in_rx) = mpsc::channel::<ClipboardData>();
@@ -159,8 +166,13 @@ fn serve_bulk(conn: BulkConn, hello: Option<BulkMsg>) -> anyhow::Result<()> {
                     tracing::warn!(error = %e, "file receive failed");
                 }
             }
-            // Peer told us its screen size — remember it for the settings window.
+            // Peer told us its screen size — use it LIVE for the offset math and
+            // remember it for the settings window (Deskflow's DINF pattern).
             Ok(BulkMsg::Hello { name, screen, .. }) => {
+                tracing::info!(peer = %name, width = screen.0, height = screen.1, "peer reported its screen size (Hello)");
+                if let Some(ps) = &peer_screen {
+                    *ps.lock().unwrap() = screen;
+                }
                 record_peer_screen(&name, screen);
             }
             Ok(_) => {}
@@ -179,7 +191,7 @@ fn run_server_input(
     server_border: Edge,
     offset: i32,
     server_screen: (u32, u32),
-    client_screen: (u32, u32),
+    peer_screen: Arc<Mutex<(u32, u32)>>,
 ) -> anyhow::Result<()> {
     let mut peer: Option<SocketAddr> = None;
     let mut prev_active = false;
@@ -220,10 +232,19 @@ fn run_server_input(
                     // (both-Shift / F12) send nothing — the user toggles back.
                     if let Some((edge, server_perp)) = *control.entry.lock().unwrap() {
                         // Apply the arrangement offset here so the client stays
-                        // dumb (it just warps to the pixel we send).
+                        // dumb (it just warps to the pixel we send). Read the
+                        // peer's screen LIVE so a resolution change is honoured.
+                        let client_screen = *peer_screen.lock().unwrap();
                         let cdim = perp_dim(edge, client_screen.0, client_screen.1);
                         let pos = map_to_client(server_perp, offset, cdim);
-                        let _ = udp.send_to(InputMsg::Enter { edge: opposite(edge), pos }, p);
+                        // The span (in client coords) where the client may cross
+                        // back — the overlap of the two screens along the edge.
+                        let sdim = perp_dim(edge, server_screen.0, server_screen.1) as i32;
+                        let span = client_return_span(offset, sdim, cdim as i32);
+                        let _ = udp.send_to(
+                            InputMsg::Enter { edge: opposite(edge), pos, span },
+                            p,
+                        );
                     }
                 } else {
                     let _ = udp.send_to(InputMsg::Leave { pos: 0 }, p);
@@ -286,19 +307,24 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
     // Arrangement offset + the client's recorded screen size, for seamless,
     // offset-aware edge crossings.
     let offset = cfg.offset;
-    let client_screen = cfg
-        .machines
-        .iter()
-        .find(|m| m.name != cfg.name)
-        .and_then(|m| m.screen)
-        .unwrap_or((1920, 1080));
+    // The peer's screen is learned dynamically (Hello) and kept LIVE here, so a
+    // resolution change or a stale config never breaks the offset mapping. The
+    // config value is only a first-guess until the client says hello.
+    let peer_screen = Arc::new(Mutex::new(
+        cfg.machines
+            .iter()
+            .find(|m| m.name != cfg.name)
+            .and_then(|m| m.screen)
+            .unwrap_or((1920, 1080)),
+    ));
 
     // Capture runs once, globally, feeding a channel. Control starts local.
     let (tx, rx) = mpsc::channel();
     let control = Arc::new(Control::new());
     let control_cap = control.clone();
+    let peer_cap = peer_screen.clone();
     std::thread::spawn(move || {
-        if let Err(e) = capture::run(tx, control_cap, edges, (sw, sh)) {
+        if let Err(e) = capture::run(tx, control_cap, edges, (sw, sh), offset, peer_cap) {
             tracing::error!(error = %e, "capture thread stopped");
         }
     });
@@ -322,17 +348,25 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
         };
         tracing::info!(%peer_ip, "client authenticated (encrypted session established)");
 
-        // Bulk channel (clipboard/files) in the background.
+        // Bulk channel (clipboard/files) in the background; it also receives the
+        // client's Hello and updates the live peer-screen size.
+        let ps_bulk = peer_screen.clone();
         std::thread::spawn(move || {
-            let _ = serve_bulk(conn, None);
+            let _ = serve_bulk(conn, None, Some(ps_bulk));
         });
 
         // Encrypted UDP input channel for this session.
         let udp = InputChannel::bind(bind_addr, None)?.with_cipher(Arc::new(input_sess));
         udp.set_read_timeout(Some(Duration::from_millis(1)))?;
-        if let Err(e) =
-            run_server_input(&udp, &rx, &control, server_border, offset, (sw, sh), client_screen)
-        {
+        if let Err(e) = run_server_input(
+            &udp,
+            &rx,
+            &control,
+            server_border,
+            offset,
+            (sw, sh),
+            peer_screen.clone(),
+        ) {
             tracing::warn!(error = %e, "input session ended; awaiting new client");
         }
     }
@@ -372,7 +406,7 @@ pub fn connect(server: Option<&str>) -> anyhow::Result<()> {
         screen: (cw, ch),
     };
     std::thread::spawn(move || {
-        if let Err(e) = serve_bulk(conn, Some(hello)) {
+        if let Err(e) = serve_bulk(conn, Some(hello), None) {
             tracing::warn!(error = %e, "bulk channel closed");
         }
     });
@@ -396,8 +430,8 @@ pub fn connect(server: Option<&str>) -> anyhow::Result<()> {
     loop {
         match channel.recv(&mut buf) {
             Ok(Some((pkt, _))) => match pkt.msg {
-                InputMsg::Enter { edge, pos } => {
-                    tracker.enter(edge, pos);
+                InputMsg::Enter { edge, pos, span } => {
+                    tracker.enter(edge, pos, span);
                     controlling = true;
                     // Warp the real cursor to the exact spot the server sent
                     // (already offset-adjusted), so it appears where it crossed.

@@ -92,6 +92,33 @@ pub fn map_to_server(client_perp: i32, offset: i32, server_dim: u32) -> i32 {
     (client_perp + offset).clamp(0, server_dim as i32 - 1)
 }
 
+/// The span along THIS screen's border edge (`0..this_dim`) that actually
+/// overlaps the neighbour — i.e. where a crossing is allowed, like two real
+/// adjacent monitors. Outside this span the edge is a wall. `offset` is the
+/// neighbour's start along the edge relative to ours; `other_dim` its size
+/// along the edge (`<=0` means "unknown", so the whole edge stays active).
+pub fn overlap_span(this_dim: i32, offset: i32, other_dim: i32) -> (i32, i32) {
+    if other_dim <= 0 {
+        return (0, this_dim);
+    }
+    (offset.max(0), (offset + other_dim).min(this_dim))
+}
+
+/// The overlap span expressed in the CLIENT's coordinates, computed by the
+/// server so it can tell the client where it is allowed to cross back. In the
+/// client's frame our screen sits at `[-offset, -offset + this_dim]`.
+pub fn client_return_span(offset: i32, this_dim: i32, client_dim: i32) -> (i32, i32) {
+    if this_dim <= 0 {
+        return (0, client_dim);
+    }
+    ((-offset).max(0), (-offset + this_dim).min(client_dim))
+}
+
+/// Is `along` (a position along the edge) inside the inclusive span?
+pub fn in_span(along: i32, span: (i32, i32)) -> bool {
+    along >= span.0 && along <= span.1
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -104,6 +131,26 @@ mod tests {
         assert_eq!(entry_point(Edge::Bottom, 250, 1000, 800), (250, 797));
         // Out-of-range perp is clamped onto the screen.
         assert_eq!(entry_point(Edge::Left, 5000, 1000, 800), (2, 799));
+    }
+
+    #[test]
+    fn overlap_only_where_monitors_meet() {
+        // Server (top) 2560 wide; client (Mac) 1470 wide, sitting 545px in.
+        // Only the middle band of the server's edge overlaps the client.
+        assert_eq!(overlap_span(2560, 545, 1470), (545, 2015));
+        // A narrow screen fully under a wide neighbour => the whole edge is live.
+        assert_eq!(overlap_span(1470, -545, 2560), (0, 1470));
+        // Unknown neighbour size => whole edge stays active (safe default).
+        assert_eq!(overlap_span(1470, 0, 0), (0, 1470));
+        assert!(in_span(1000, (545, 2015)));
+        assert!(!in_span(100, (545, 2015))); // far left = wall
+    }
+
+    #[test]
+    fn client_return_span_is_the_mirror() {
+        // Server (Mac, 1470) sits 545px into the wide client (Windows, 2560):
+        // from Mac, Windows starts 545px to the LEFT => offset = -545.
+        assert_eq!(client_return_span(-545, 1470, 2560), (545, 2015));
     }
 
     #[test]

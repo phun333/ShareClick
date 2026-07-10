@@ -127,6 +127,8 @@ pub fn run(
     control: Arc<Control>,
     edges: EdgeConfig,
     screen: (u32, u32),
+    offset: i32,
+    peer_screen: Arc<Mutex<(u32, u32)>>,
 ) -> anyhow::Result<()> {
     #[cfg(not(target_os = "macos"))]
     let _ = screen;
@@ -195,14 +197,24 @@ pub fn run(
             if let EventType::MouseMove { x, y } = event.event_type {
                 let (xi, yi) = (x.round() as i32, y.round() as i32);
                 if let Some(edge) = edges.hit(xi, yi) {
-                    // Perpendicular pixel we left at (server-local).
+                    // Position along the edge we left at (server-local).
                     let perp = match edge {
                         Edge::Left | Edge::Right => yi,
                         Edge::Top | Edge::Bottom => xi,
                     };
-                    *control.entry.lock().unwrap() = Some((edge, perp));
-                    control.active.store(true, Ordering::Relaxed);
-                    tracing::info!(?edge, "cursor crossed edge; control handed to client");
+                    // Only cross where the two screens actually overlap, so the
+                    // edge feels like a real adjacent monitor (a wall elsewhere).
+                    let peer = *peer_screen.lock().unwrap();
+                    let (this_dim, other_dim) = match edge {
+                        Edge::Left | Edge::Right => (screen.1 as i32, peer.1 as i32),
+                        Edge::Top | Edge::Bottom => (screen.0 as i32, peer.0 as i32),
+                    };
+                    let span = crate::edge::overlap_span(this_dim, offset, other_dim);
+                    if crate::edge::in_span(perp, span) {
+                        *control.entry.lock().unwrap() = Some((edge, perp));
+                        control.active.store(true, Ordering::Relaxed);
+                        tracing::info!(?edge, perp, "cursor crossed edge; control handed to client");
+                    }
                 }
             }
         }
