@@ -413,14 +413,21 @@ impl SettingsApp {
             self.drag = seed_rel(self.side, self.offset as f32 * scale, this_size, other_size);
             self.placed = true;
         }
-        // First monitor fixed at the centre; drag the second around it. The
-        // second can never OVERLAP the first — its edge collides and it slides
-        // along, like two real monitors (macOS Displays).
-        let this_center = canvas.center();
+        // The second monitor can never OVERLAP the first — its edge collides
+        // and slides (macOS Displays). We keep `self.drag` as the relative
+        // placement, then re-centre the PAIR in the canvas each frame so nothing
+        // ever spills outside the box.
+        let c0 = canvas.center();
+        let this_rect0 = egui::Rect::from_center_size(c0, this_size);
+        let mut other0 = c0 + self.drag;
+        other0 = resolve_overlap(this_rect0, other0, other_size);
+        self.drag = other0 - c0;
+        // Shift both so the bounding box of the two screens is centred.
+        let bbox = this_rect0.union(egui::Rect::from_center_size(other0, other_size));
+        let shift = canvas.center() - bbox.center();
+        let this_center = c0 + shift;
+        let other_center = other0 + shift;
         let this_rect = egui::Rect::from_center_size(this_center, this_size);
-        let mut other_center = this_center + self.drag;
-        other_center = resolve_overlap(this_rect, other_center, other_size);
-        self.drag = other_center - this_center;
         let other_rect = egui::Rect::from_center_size(other_center, other_size);
 
         let blue = egui::Color32::from_rgb(0x2b, 0x7a, 0xff);
