@@ -168,21 +168,10 @@ fn open_path(path: &PathBuf) -> std::io::Result<()> {
     std::process::Command::new("xdg-open").arg(path).spawn().map(|_| ())
 }
 
-/// A simple 32×32 brand icon (rounded blue square) generated in code so we do
-/// not need to ship an image asset.
+/// The ShareClick brand icon (a blue cursor-click glyph) — pre-rendered to raw
+/// 64×64 RGBA and embedded so we ship no image files or SVG renderer.
 fn brand_icon() -> Icon {
-    const S: u32 = 32;
-    let mut rgba = Vec::with_capacity((S * S * 4) as usize);
-    for y in 0..S {
-        for x in 0..S {
-            let (cx, cy) = (S as i32 / 2, S as i32 / 2);
-            let d = (x as i32 - cx).abs().max((y as i32 - cy).abs());
-            if d < 14 {
-                rgba.extend_from_slice(&[0x2b, 0x7a, 0xff, 0xff]); // blue fill
-            } else {
-                rgba.extend_from_slice(&[0, 0, 0, 0]); // transparent
-            }
-        }
-    }
+    const S: u32 = 64;
+    let rgba = include_bytes!("tray_icon_64.rgba").to_vec();
     Icon::from_rgba(rgba, S, S).expect("valid rgba icon")
 }
