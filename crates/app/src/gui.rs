@@ -141,6 +141,11 @@ pub fn run() -> anyhow::Result<()> {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([560.0, 640.0])
             .with_min_inner_size([460.0, 560.0])
+            .with_icon(std::sync::Arc::new(egui::IconData {
+                rgba: include_bytes!("tray_icon_64.rgba").to_vec(),
+                width: 64,
+                height: 64,
+            }))
             .with_title("ShareClick — Settings & Monitor Manager"),
         ..Default::default()
     };
