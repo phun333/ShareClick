@@ -1,15 +1,19 @@
 :root{
   --bg:#fafafa; --card:#fff; --ink:#111; --muted:#6b7280;
   --line:#e7e7e7; --line-strong:#d9d9d9; --accent:#2563eb; --radius:14px;
+  /* Emil Kowalski easing curves — stronger than default CSS easings */
+  --ease-out:cubic-bezier(0.23,1,0.32,1);
+  --ease-in-out:cubic-bezier(0.77,0,0.175,1);
 }
 *{box-sizing:border-box}
+html{interpolate-size:allow-keywords}
 body{
   margin:0;background:var(--bg);color:var(--ink);
   font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
   font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;
   min-height:100vh;display:flex;flex-direction:column;
 }
-a{color:var(--accent);text-decoration:none}
+a{color:var(--accent);text-decoration:none;transition:color .15s ease}
 a:hover{text-decoration:underline}
 .wrap{width:100%;max-width:920px;margin:0 auto;padding:0 24px}
 svg{display:block}
@@ -18,8 +22,9 @@ header{display:flex;align-items:center;justify-content:space-between;padding:24p
 header .home{color:var(--ink);font-weight:700;letter-spacing:-.02em;display:inline-flex;align-items:center;gap:9px}
 header .home:hover{text-decoration:none;opacity:.8}
 .hnav{display:flex;align-items:center;gap:18px;margin-left:auto}
-header a.icon{color:var(--muted);display:inline-flex}
-header a.icon:hover{color:var(--ink)}
+header a.icon{color:var(--muted);display:inline-flex;transition:color .15s ease,transform .16s var(--ease-out)}
+header a.icon:active{transform:scale(0.9)}
+@media (hover:hover) and (pointer:fine){header a.icon:hover{color:var(--ink)}}
 header a.icon svg{width:20px;height:20px}
 .dot{width:11px;height:11px;border-radius:50%;background:var(--ink)}
 
@@ -32,9 +37,14 @@ h1{font-size:clamp(72px,15vw,180px);font-weight:800;letter-spacing:-.045em;line-
 .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:36px 0 0}
 .btn{display:inline-flex;align-items:center;gap:10px;background:var(--ink);color:#fff;
   padding:13px 22px;border-radius:11px;font-weight:500;font-size:14px;
-  border:1px solid var(--ink);transition:transform .08s,opacity .15s}
-.btn:hover{opacity:.9;text-decoration:none;transform:translateY(-1px)}
+  border:1px solid var(--ink);
+  transition:transform .16s var(--ease-out),opacity .15s ease,box-shadow .2s var(--ease-out)}
+@media (hover:hover) and (pointer:fine){
+  .btn:hover{opacity:.92;text-decoration:none;transform:translateY(-2px);box-shadow:0 6px 20px -6px rgba(17,17,17,.35)}
+}
+.btn:active{transform:scale(0.97);transition:transform .1s ease-out}
 .btn.ghost{background:transparent;color:var(--ink);border-color:var(--line-strong)}
+@media (hover:hover) and (pointer:fine){.btn.ghost:hover{box-shadow:0 6px 20px -8px rgba(17,17,17,.2)}}
 .btn svg{width:17px;height:17px}
 .sub{text-align:center;color:var(--muted);font-size:12.5px;margin:14px 0 0}
 
@@ -48,7 +58,9 @@ h1{font-size:clamp(72px,15vw,180px);font-weight:800;letter-spacing:-.045em;line-
 
 .feat{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);
   border-radius:var(--radius);overflow:hidden;background:var(--card);margin:56px 0 0}
-.feat div{padding:20px 22px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);font-size:13.5px}
+.feat div{padding:20px 22px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);font-size:13.5px;
+  transition:background .2s ease}
+@media (hover:hover) and (pointer:fine){.feat div:hover{background:#f6f7f9}}
 .feat b{display:block;font-weight:700;color:var(--ink);margin-bottom:2px}
 .feat span{color:var(--muted);font-size:12.5px}
 .feat div:nth-child(3n){border-right:none}
@@ -57,11 +69,19 @@ h1{font-size:clamp(72px,15vw,180px);font-weight:800;letter-spacing:-.045em;line-
 .faq{max-width:640px;margin:60px auto 40px;padding:0 24px}
 .faq h2{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0 0 10px;text-align:center;color:var(--ink)}
 .faq details{border-bottom:1px solid var(--line);padding:14px 2px}
-.faq summary{cursor:pointer;font-weight:500;font-size:14px;list-style:none;display:flex;justify-content:space-between;gap:12px;color:var(--ink)}
+.faq summary{cursor:pointer;font-weight:500;font-size:14px;list-style:none;display:flex;justify-content:space-between;gap:12px;color:var(--ink);
+  transition:color .15s ease}
 .faq summary::-webkit-details-marker{display:none}
-.faq summary::after{content:"+";color:var(--muted)}
-.faq details[open] summary::after{content:"\2212"}
+.faq summary::after{content:"+";color:var(--muted);transition:transform .2s var(--ease-out),color .15s ease}
+.faq details[open] summary::after{transform:rotate(45deg)}
+@media (hover:hover) and (pointer:fine){.faq summary:hover,.faq summary:hover::after{color:var(--ink)}}
 .faq p{margin:10px 0 2px;color:var(--muted);font-size:13.5px}
+/* smooth expand (progressive enhancement — no-op in older browsers) */
+.faq details::details-content{
+  block-size:0;overflow:hidden;
+  transition:block-size .28s var(--ease-out),content-visibility .28s allow-discrete;
+}
+.faq details[open]::details-content{block-size:auto}
 
 /* internal-link row on the homepage */
 .compare{text-align:center;color:var(--muted);font-size:13px;margin:0 auto 30px}
@@ -98,6 +118,32 @@ article strong{color:var(--ink);font-weight:700}
 footer{border-top:1px solid var(--line);margin-top:50px;padding:22px 0;color:var(--muted);font-size:12.5px;text-align:center}
 footer a{color:var(--muted)}
 footer a:hover{color:var(--ink)}
+
+/* ── entrance animations (staggered, ease-out, transform+opacity only) ─ */
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.hero h1,.hero .tag,.hero .cta,.hero .sub,.hero .facts,.feat > div{
+  opacity:0;animation:rise .6s var(--ease-out) forwards}
+.hero h1{animation-delay:.02s}
+.hero .tag{animation-delay:.10s}
+.hero .cta{animation-delay:.18s}
+.hero .sub{animation-delay:.24s}
+.hero .facts{animation-delay:.30s}
+.feat > div:nth-child(1){animation-delay:.36s}
+.feat > div:nth-child(2){animation-delay:.40s}
+.feat > div:nth-child(3){animation-delay:.44s}
+.feat > div:nth-child(4){animation-delay:.48s}
+.feat > div:nth-child(5){animation-delay:.52s}
+.feat > div:nth-child(6){animation-delay:.56s}
+.slider .knob{animation:knob 2.4s var(--ease-in-out) infinite alternate}
+@keyframes knob{from{transform:translateX(0)}to{transform:translateX(20px)}}
+
+/* respect reduced motion — keep gentle fades, drop movement */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important;scroll-behavior:auto!important}
+  .hero h1,.hero .tag,.hero .cta,.hero .sub,.hero .facts,.feat > div{opacity:1;transform:none}
+  .slider .knob{animation:none}
+}
 
 @media(max-width:680px){
   .feat{grid-template-columns:1fr}
