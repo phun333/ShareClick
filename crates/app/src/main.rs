@@ -24,6 +24,8 @@ mod keymap;
 mod discovery;
 #[cfg(feature = "native")]
 mod run;
+#[cfg(feature = "native")]
+mod service;
 #[cfg(feature = "gui")]
 mod gui;
 #[cfg(feature = "tray")]
@@ -74,6 +76,14 @@ enum Command {
         #[arg(long)]
         path: Option<String>,
     },
+    /// Run in the background using the role saved in the config ("server" or
+    /// "client"). This is what the auto-start / background service launches.
+    Run,
+    /// Install ShareClick as a login service: auto-starts in the background on
+    /// every login, runs the configured role, no terminal, no second app.
+    InstallService,
+    /// Remove the login service installed by `install-service`.
+    UninstallService,
     /// Launch the menu-bar (macOS) / system-tray (Windows) app.
     Tray,
     /// Discover ShareClick servers on the local network via mDNS.
@@ -139,6 +149,29 @@ fn main() -> anyhow::Result<()> {
         #[cfg(not(feature = "native"))]
         Command::Serve { .. } | Command::Connect { .. } => {
             anyhow::bail!("serve/connect require the `native` feature (build without --no-default-features)")
+        }
+        #[cfg(feature = "native")]
+        Command::Run => {
+            #[cfg(all(windows, feature = "tray"))]
+            hide_console_window();
+            let cfg = config::Config::load(&config::Config::default_path())?;
+            if cfg.role.as_deref() == Some("client") {
+                tracing::info!("role = client; connecting");
+                run::connect(None)
+            } else {
+                tracing::info!("role = server; serving");
+                run::serve(&format!("0.0.0.0:{}", cfg.port))
+            }
+        }
+        #[cfg(not(feature = "native"))]
+        Command::Run => anyhow::bail!("run requires the `native` feature"),
+        #[cfg(feature = "native")]
+        Command::InstallService => service::install(),
+        #[cfg(feature = "native")]
+        Command::UninstallService => service::uninstall(),
+        #[cfg(not(feature = "native"))]
+        Command::InstallService | Command::UninstallService => {
+            anyhow::bail!("service commands require the `native` feature")
         }
         #[cfg(feature = "native")]
         Command::Discover => {

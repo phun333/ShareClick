@@ -52,6 +52,27 @@ fn offset_from_rel(side: Side, rel: egui::Vec2, this: egui::Vec2, other: egui::V
     if scale <= 0.0 { 0 } else { (off_canvas / scale).round() as i32 }
 }
 
+/// Push `other_center` out of `this_rect` (plus a tiny gap) so the two monitors
+/// never overlap — the second monitor's edge collides with the first's.
+fn resolve_overlap(this: egui::Rect, other_center: egui::Pos2, other_size: egui::Vec2) -> egui::Pos2 {
+    let gap = 2.0;
+    let other = egui::Rect::from_center_size(other_center, other_size);
+    let overlap_x = this.max.x.min(other.max.x) - this.min.x.max(other.min.x);
+    let overlap_y = this.max.y.min(other.max.y) - this.min.y.max(other.min.y);
+    if overlap_x <= 0.0 || overlap_y <= 0.0 {
+        return other_center;
+    }
+    let mut c = other_center;
+    if overlap_x < overlap_y {
+        let push = overlap_x + gap;
+        if other_center.x >= this.center().x { c.x += push; } else { c.x -= push; }
+    } else {
+        let push = overlap_y + gap;
+        if other_center.y >= this.center().y { c.y += push; } else { c.y -= push; }
+    }
+    c
+}
+
 fn dominant_side(rel: egui::Vec2) -> Side {
     if rel.x.abs() > rel.y.abs() {
         if rel.x > 0.0 { Side::Right } else { Side::Left }
@@ -167,6 +188,7 @@ struct SettingsApp {
     this_name: String,
     other_name: String,
     server_host: String,
+    role: String,
     this_res: (u32, u32),
     other_w: String,
     other_h: String,
@@ -189,7 +211,7 @@ impl SettingsApp {
         let this_res = crate::emit::main_display_size().unwrap_or((1470, 956));
 
         // Derive current arrangement from an existing config, if any.
-        let (this_name, other_name, side, other_res, psk, port, server_host, offset) = match &cfg {
+        let (this_name, other_name, side, other_res, psk, port, server_host, offset, role) = match &cfg {
             Some(c) => {
                 let this = c.name.clone();
                 let other = c
@@ -225,6 +247,7 @@ impl SettingsApp {
                     c.port.to_string(),
                     c.server_host.clone().unwrap_or_default(),
                     c.offset,
+                    c.role.clone().unwrap_or_else(|| "server".into()),
                 )
             }
             None => (
@@ -236,6 +259,7 @@ impl SettingsApp {
                 "24800".into(),
                 String::new(),
                 0,
+                "server".into(),
             ),
         };
 
@@ -252,6 +276,7 @@ impl SettingsApp {
             drag: egui::Vec2::ZERO,
             offset,
             placed: false,
+            role,
             status: String::new(),
         }
     }
@@ -279,6 +304,7 @@ impl SettingsApp {
                 }
             },
             offset: self.offset,
+            role: Some(self.role.clone()),
             machines: vec![this, other],
         };
         cfg.validate()?;
@@ -301,6 +327,18 @@ impl eframe::App for SettingsApp {
                 ui.end_row();
                 ui.label("This machine name");
                 ui.text_edit_singleline(&mut self.this_name);
+                ui.end_row();
+                ui.label("This machine runs as");
+                egui::ComboBox::from_id_source("role")
+                    .selected_text(if self.role == "client" {
+                        "Client (controlled)"
+                    } else {
+                        "Server (shares keyboard & mouse)"
+                    })
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(&mut self.role, "server".into(), "Server (shares keyboard & mouse)");
+                        ui.selectable_value(&mut self.role, "client".into(), "Client (controlled)");
+                    });
                 ui.end_row();
                 ui.label("Other machine name");
                 ui.text_edit_singleline(&mut self.other_name);
@@ -375,10 +413,14 @@ impl SettingsApp {
             self.drag = seed_rel(self.side, self.offset as f32 * scale, this_size, other_size);
             self.placed = true;
         }
-        // Centre the pair in the canvas.
-        let this_center = canvas.center() - self.drag / 2.0;
-        let other_center = this_center + self.drag;
+        // First monitor fixed at the centre; drag the second around it. The
+        // second can never OVERLAP the first — its edge collides and it slides
+        // along, like two real monitors (macOS Displays).
+        let this_center = canvas.center();
         let this_rect = egui::Rect::from_center_size(this_center, this_size);
+        let mut other_center = this_center + self.drag;
+        other_center = resolve_overlap(this_rect, other_center, other_size);
+        self.drag = other_center - this_center;
         let other_rect = egui::Rect::from_center_size(other_center, other_size);
 
         let blue = egui::Color32::from_rgb(0x2b, 0x7a, 0xff);
