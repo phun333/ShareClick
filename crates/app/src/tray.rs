@@ -59,6 +59,21 @@ pub fn run() -> anyhow::Result<()> {
     menu.append(&PredefinedMenuItem::separator())?;
     menu.append(&item_quit)?;
 
+    // Behave like a background service: if the config already says which side
+    // this machine is, start it automatically so the user doesn't have to click
+    // Start every login. Without a role, wait for a menu choice.
+    match Config::load(&config_path).ok().and_then(|c| c.role).as_deref() {
+        Some("client") => {
+            item_status.set_text("ShareClick — client");
+            spawn_connect();
+        }
+        Some("server") => {
+            item_status.set_text("ShareClick — serving");
+            spawn_serve();
+        }
+        _ => {}
+    }
+
     // The tray icon must be created after the loop starts on macOS, so we build
     // it lazily on the first `Init` event and keep it alive here (RAII).
     let mut _tray = None;
