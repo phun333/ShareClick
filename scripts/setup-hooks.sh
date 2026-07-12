@@ -5,6 +5,6 @@ set -e
 cd "$(git rev-parse --show-toplevel)"
 chmod +x .githooks/*
 git config core.hooksPath .githooks
-echo "✓ Git hooks installed (core.hooksPath = .githooks)"
+echo "OK: Git hooks installed (core.hooksPath = .githooks)"
 echo "  pre-commit : cargo fmt check + large-file guard"
 echo "  commit-msg : Conventional Commits check"

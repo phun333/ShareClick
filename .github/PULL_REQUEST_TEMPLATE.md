@@ -4,11 +4,11 @@
 
 ## Type of change
 
-- [ ] 🐛 Bug fix
-- [ ] ✨ New feature
-- [ ] 📖 Documentation
-- [ ] ♻️ Refactor / cleanup
-- [ ] ⚡ Performance
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Documentation
+- [ ] Refactor / cleanup
+- [ ] Performance
 
 ## How was this tested?
 

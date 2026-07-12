@@ -81,7 +81,7 @@ jobs:
               Then grant **Accessibility** + **Input Monitoring**.
             * **Windows:** `ShareClick-Setup-*.exe` → run it (no admin needed).
 
-            ⚠️ **These builds are unsigned** (no paid certificate), so you'll see a
+            **Note: these builds are unsigned** (no paid certificate), so you'll see a
             one-time OS warning — normal for open-source apps.
             * **macOS** "app is damaged / can't be opened": open Terminal and run
               `xattr -cr /Applications/ShareClick.app`, then launch it. (Or
@@ -89,7 +89,7 @@ jobs:
               → Open Anyway.)
             * **Windows** SmartScreen: **More info → Run anyway**.
 
-            👉 Install help: https://github.com/phun333/ShareClick/blob/main/docs/INSTALL.md
+            Install help: https://github.com/phun333/ShareClick/blob/main/docs/INSTALL.md
 
             **How to use it:** open the app (menu-bar / tray) → **Settings** → set
             the same passphrase + layout on both machines → **Start Server** on one,

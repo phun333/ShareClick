@@ -38,7 +38,7 @@ Borders; the cross-platform answer to Apple Universal Control.
       constantly for "X alternative" queries.) https://alternativeto.net
 - [ ] **Product Hunt** — launch the app. Prep a gallery + first comment. Best
       Tue–Thu 12:01am PT. https://www.producthunt.com
-- [ ] **GitHub** — ✅ topics set. Add a social-preview image (Settings → Social
+- [ ] **GitHub** — topics set. Add a social-preview image (Settings → Social
       preview) using `site/og.png`. Pin the repo on your profile.
 - [ ] **Hacker News** — "Show HN: ShareClick – open-source software KVM for
       Mac↔Windows". Link the repo, reply to comments.

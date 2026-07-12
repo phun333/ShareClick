@@ -33,26 +33,26 @@ these naturally — **never keyword-stuff**; Google punishes it.
 
 ## On-page SEO — DONE (in `site/index.html`)
 
-- ✅ Keyword-rich `<title>` and `<meta description>` (front-loaded keywords).
-- ✅ **`SoftwareApplication` JSON-LD** with `offers` price `0` → eligible for the
+- Keyword-rich `<title>` and `<meta description>` (front-loaded keywords).
+- **`SoftwareApplication` JSON-LD** with `offers` price `0` → eligible for the
   "Free" rich result in Google. `operatingSystem: macOS, Windows`,
   `applicationCategory: UtilitiesApplication` (Google enum), `downloadUrl`,
   `featureList`, `sameAs` (GitHub + X).
-- ✅ **`FAQPage` JSON-LD** matching the visible FAQ → eligible for FAQ rich
+- **`FAQPage` JSON-LD** matching the visible FAQ → eligible for FAQ rich
   results / "People also ask". (The FAQ text must stay visible on the page.)
-- ✅ Open Graph + Twitter Card + `og.png` (1200×630) → rich link previews when
+- Open Graph + Twitter Card + `og.png` (1200×630) → rich link previews when
   shared anywhere.
-- ✅ `canonical`, `robots`, `sitemap.xml`, `robots.txt`, `favicon.svg`.
-- ✅ Fast static pages, mobile-responsive, HTTPS via GitHub Pages → strong Core
+- `canonical`, `robots`, `sitemap.xml`, `robots.txt`, `favicon.svg`.
+- Fast static pages, mobile-responsive, HTTPS via GitHub Pages → strong Core
   Web Vitals (a real ranking factor).
-- ✅ **Comparison pages** (`vs-synergy.html`, `vs-sharemouse.html`,
+- **Comparison pages** (`vs-synergy.html`, `vs-sharemouse.html`,
   `vs-barrier.html`) with fair comparison tables + `BreadcrumbList` schema →
   intercept high-intent "X alternative / vs X" searches.
-- ✅ **Setup guide** (`how-to-share-mouse-keyboard-mac-windows.html`) with `HowTo`
+- **Setup guide** (`how-to-share-mouse-keyboard-mac-windows.html`) with `HowTo`
   schema → targets the primary "how to share mouse & keyboard mac windows" query.
-- ✅ Internal linking (home ↔ comparisons ↔ guide), shared `style.css`,
+- Internal linking (home ↔ comparisons ↔ guide), shared `style.css`,
   `manifest.webmanifest`, branded `404.html`, expanded `sitemap.xml`.
-- ✅ Google Search Console verification `<meta>` placeholder in `index.html`
+- Google Search Console verification `<meta>` placeholder in `index.html`
   (paste your token and uncomment).
 
 **Validate after deploy:**

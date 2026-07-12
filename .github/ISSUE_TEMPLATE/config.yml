@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 📖 Documentation
+  - name: Documentation
     url: https://phun333.github.io/ShareClick/
     about: Check the docs first — setup, pairing, and troubleshooting guides.
-  - name: 💬 Questions & Discussions
+  - name: Questions & Discussions
     url: https://github.com/phun333/ShareClick/discussions
     about: Ask questions, share ideas, or show off your setup.

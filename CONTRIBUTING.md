@@ -1,6 +1,6 @@
 # Contributing to ShareClick
 
-Thanks for your interest in contributing! 🎉
+Thanks for your interest in contributing!
 
 ## Getting started
 

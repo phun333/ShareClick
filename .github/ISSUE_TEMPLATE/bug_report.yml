@@ -1,4 +1,4 @@
-name: 🐛 Bug Report
+name: Bug Report
 description: Something isn't working as expected
 title: "bug: "
 labels: ["bug", "needs-triage"]

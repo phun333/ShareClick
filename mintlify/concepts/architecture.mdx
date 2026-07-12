@@ -85,13 +85,13 @@ touches the OS or the network.
 | `edge.rs` | Server-side screen-edge hit detection | — |
 | `cursor.rs` | Client-side cursor integration for auto-return | — |
 | `control.rs` | Shared control state (active? entry edge) | — |
-| `capture.rs` | `rdev` global grab: capture + suppress local input | ✅ |
-| `emit.rs` | `enigo` input injection | ✅ |
-| `keymap.rs` | rdev ⇄ portable `Key` ⇄ enigo translation | ✅ |
-| `clipboard.rs` | Bidirectional clipboard sync (text + image) | ✅ |
-| `discovery.rs` | mDNS advertise/browse | ✅ |
-| `run.rs` | Wires everything into `serve` / `connect` loops | ✅ |
-| `tray.rs` | Menu-bar / system-tray GUI (`tray` feature) | ✅ + `tray` |
+| `capture.rs` | `rdev` global grab: capture + suppress local input | Yes |
+| `emit.rs` | `enigo` input injection | Yes |
+| `keymap.rs` | rdev ⇄ portable `Key` ⇄ enigo translation | Yes |
+| `clipboard.rs` | Bidirectional clipboard sync (text + image) | Yes |
+| `discovery.rs` | mDNS advertise/browse | Yes |
+| `run.rs` | Wires everything into `serve` / `connect` loops | Yes |
+| `tray.rs` | Menu-bar / system-tray GUI (`tray` feature) | Yes, plus `tray` |
 
 Non-native modules build and test with `--no-default-features`, which is what CI
 uses for fast, permissionless unit tests.

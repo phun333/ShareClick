@@ -93,7 +93,7 @@ async function main() {
   try {
     rel = await fetchLatestRelease();
   } catch (err) {
-    console.warn(`⚠️  could not fetch latest release: ${err.message}`);
+    console.warn(`WARNING: could not fetch latest release: ${err.message}`);
     console.warn("    leaving download.mdx unchanged.");
     return;
   }
@@ -104,11 +104,11 @@ async function main() {
   const updated = before + block + after;
 
   if (updated === original) {
-    console.log(`✓ download.mdx already up to date (${rel.tag_name}).`);
+    console.log(`OK: download.mdx already up to date (${rel.tag_name}).`);
     return;
   }
   await writeFile(PAGE, updated, "utf8");
-  console.log(`✓ updated download.mdx → ${rel.tag_name}`);
+  console.log(`OK: updated download.mdx -> ${rel.tag_name}`);
 }
 
 main().catch((err) => {
