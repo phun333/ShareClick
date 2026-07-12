@@ -13,6 +13,11 @@ Rules for any AI agent (and human contributors) working in this repository.
 2. Script/hook output uses plain ASCII: `OK`, `ERROR`, `->` (no checkmarks, crosses, or arrows from Unicode symbol blocks).
 3. Keep prose factual and concise. No hype adjectives in user-facing docs.
 
+## Git rules (hard requirements)
+
+1. **NO `git commit` and NO `git push` without explicit user approval.** Always ask first, every time. Prepare changes and show a summary, then wait for the user to approve the commit.
+2. Never force-push, rebase published history, or delete branches without explicit user approval.
+
 ## Project conventions
 
 - Commit messages follow Conventional Commits (enforced by `.githooks/commit-msg` and CI).
