@@ -1,12 +1,12 @@
 {
-  "version": "0.3.1-test",
+  "version": "0.4.0-test",
   "description": "Software KVM — share keyboard, mouse, clipboard & files between Mac and Windows over the LAN.",
   "homepage": "https://phun333.github.io/ShareClick/",
   "license": "MIT",
   "architecture": {
     "64bit": {
-      "url": "https://github.com/phun333/ShareClick/releases/download/v0.3.1-test/ShareClick-Setup-0.3.1-test.exe",
-      "hash": "85463ad112ac6037d7af1304bda79da7d218ee41cca9ae29653d1c57b0742d68"
+      "url": "https://github.com/phun333/ShareClick/releases/download/v0.4.0-test/ShareClick-Setup-0.4.0-test.exe",
+      "hash": "a9e3eda6d8531c1d660e580bdf379b9e4f9d6b7ed52c5ec75f7750eb938482c3"
     }
   },
   "innosetup": true,
