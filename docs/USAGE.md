@@ -11,13 +11,18 @@ haven't installed yet, see [INSTALL.md](./INSTALL.md).
 
 ## Key idea (read this first)
 
-- The machine whose **physical keyboard & mouse** you use is the **server**.
-- The machine you want to **control** is the **client**.
+- ShareClick is **symmetric** (like ShareMouse): once connected, **both
+  machines' mice and keyboards work** — grab whichever you like. Push the
+  cursor through the shared screen edge and it crosses to the other machine;
+  push it back and it returns.
+- "Server" vs "client" only decides **who listens** for the connection — it
+  doesn't matter for control. Easiest: don't pick at all and use
+  **auto-pairing** (`shareclick pair`, or just leave the role unset): the two
+  machines find each other on the LAN and connect — **no IP addresses**.
 - Both machines need the **same passphrase** (it authenticates + encrypts).
 - Both machines must be on the **same Wi‑Fi / network**.
-
-Example used below: **Mac = server**, **Windows PC = client**. (You can swap the
-roles — just swap which one runs "server" vs "client".)
+- The **monitor arrangement** only needs to be set on ONE machine — the other
+  adopts the mirrored layout automatically when they connect.
 
 ---
 
@@ -29,11 +34,11 @@ roles — just swap which one runs "server" vs "client".)
    **system tray** (Windows, bottom‑right).
 2. Click the icon → **Settings & Monitor Manager**. This opens the visual
    settings window.
-3. Set the **shared passphrase** (same on both machines), the machine names, and
-   — on the client — the **server host** (or leave it blank to auto‑discover).
-4. In the **arrangement** panel, drag the second monitor to where it physically
-   sits next to the first (left / right / above / below). ShareClick works out
-   which screen edges border each other from that. Then **Save**.
+3. Set the **shared passphrase** (same on both machines) and the machine names.
+   Leave **Server host** blank (auto‑discovery finds the peer).
+4. On ONE machine, in the **arrangement** panel, drag the second monitor to
+   where it physically sits (left / right / above / below — with any offset).
+   The other machine adopts this layout automatically on connect. **Save**.
 
 > Screen sizes are **auto-detected**: this machine's from the OS, and the other
 > machine's is reported automatically the first time it connects. You can also
