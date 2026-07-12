@@ -67,6 +67,22 @@ impl Injector {
                 }
             }
             InputEvent::Key { key, pressed } => {
+                // Cross-platform modifier swap (standard KVM behaviour): the
+                // Mac's Cmd acts as Ctrl on Windows (Cmd+C → Ctrl+C, and NOT
+                // Win+C — which used to pop Copilot), and the PC's Ctrl acts as
+                // Cmd on macOS (Ctrl+C → Cmd+C).
+                #[cfg(target_os = "windows")]
+                let key = match key {
+                    shareclick_protocol::Key::LMeta => shareclick_protocol::Key::LCtrl,
+                    shareclick_protocol::Key::RMeta => shareclick_protocol::Key::RCtrl,
+                    k => k,
+                };
+                #[cfg(target_os = "macos")]
+                let key = match key {
+                    shareclick_protocol::Key::LCtrl => shareclick_protocol::Key::LMeta,
+                    shareclick_protocol::Key::RCtrl => shareclick_protocol::Key::RMeta,
+                    k => k,
+                };
                 if let Some(k) = keymap::to_enigo(key) {
                     let dir = if pressed { Direction::Press } else { Direction::Release };
                     self.enigo

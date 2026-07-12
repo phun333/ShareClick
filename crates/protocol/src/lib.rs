@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 pub mod crypto;
 
 /// Protocol version. Bump on breaking wire changes.
-pub const PROTOCOL_VERSION: u16 = 4;
+pub const PROTOCOL_VERSION: u16 = 5;
 
 /// Screen edge a cursor can cross to hand control to a neighbour.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -126,6 +126,8 @@ pub enum BulkMsg {
         screen: (u32, u32),
         edge: Option<Edge>,
         offset: i32,
+        /// The sender just re-arranged its layout — adopt unconditionally.
+        refresh: bool,
     },
     /// Handshake acknowledgement.
     Welcome { version: u16, name: String },

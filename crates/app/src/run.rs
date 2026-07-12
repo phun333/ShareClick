@@ -91,6 +91,9 @@ struct Shared {
     peer_screen: Arc<Mutex<(u32, u32)>>,
     /// My own screen size.
     screen: (u32, u32),
+    /// Outgoing bulk-channel sender (set once the bulk thread is up) — lets the
+    /// pump push a refreshed Hello when the user re-arranges mid-session.
+    hello_tx: Arc<Mutex<Option<mpsc::Sender<BulkMsg>>>>,
 }
 
 /// Build the shared state from the local config (arrangement may be absent —
@@ -134,18 +137,35 @@ fn build_shared(cfg: &Config) -> Shared {
         border: Arc::new(Mutex::new(border)),
         peer_screen: Arc::new(Mutex::new(peer_screen)),
         screen: (sw, sh),
+        hello_tx: Arc::new(Mutex::new(None)),
     }
 }
 
 /// My own Hello: name + screen + my arrangement (so a peer with none adopts it).
-fn my_hello(cfg: &Config, sh: &Shared) -> BulkMsg {
+/// `refresh` = the user just re-arranged; the peer must adopt unconditionally.
+fn my_hello(cfg_name: &str, sh: &Shared, refresh: bool) -> BulkMsg {
     BulkMsg::Hello {
         version: shareclick_protocol::PROTOCOL_VERSION,
-        name: cfg.name.clone(),
+        name: cfg_name.to_string(),
         screen: sh.screen,
         edge: *sh.border.lock().unwrap(),
         offset: sh.arrangement.lock().unwrap().1,
+        refresh,
     }
+}
+
+/// Reload the arrangement from the config (the settings window saved while we
+/// were running) into the live shared state, and tell the peer so it adopts.
+/// This is what makes "connect first, arrange after" work without restarts.
+fn reload_arrangement(cfg_name: &str, sh: &Shared) {
+    let Ok(cfg) = Config::load(&Config::default_path()) else { return };
+    let fresh = build_shared(&cfg);
+    *sh.border.lock().unwrap() = *fresh.border.lock().unwrap();
+    *sh.arrangement.lock().unwrap() = *fresh.arrangement.lock().unwrap();
+    if let Some(tx) = sh.hello_tx.lock().unwrap().as_ref() {
+        let _ = tx.send(my_hello(cfg_name, sh, true));
+    }
+    tracing::info!("arrangement reloaded from settings and sent to the peer");
 }
 
 /// Load the config or explain how to create one.
@@ -284,6 +304,8 @@ fn serve_bulk(conn: BulkConn, hello: Option<BulkMsg>, sh: Shared, adopt: bool) -
     if let Some(h) = hello {
         let _ = out_tx.send(h);
     }
+    // Let the input pump push refreshed Hellos (live re-arrangement).
+    *sh.hello_tx.lock().unwrap() = Some(out_tx.clone());
 
     let mut wconn = conn.try_clone()?;
     std::thread::spawn(move || {
@@ -315,13 +337,13 @@ fn serve_bulk(conn: BulkConn, hello: Option<BulkMsg>, sh: Shared, adopt: bool) -
             // Deskflow's DINF pattern) and optionally its monitor arrangement —
             // adopt the mirrored version so the layout is only ever configured
             // on ONE machine.
-            Ok(BulkMsg::Hello { name, screen, edge, offset, .. }) => {
+            Ok(BulkMsg::Hello { name, screen, edge, offset, refresh, .. }) => {
                 tracing::info!(peer = %name, width = screen.0, height = screen.1, "peer reported its screen size (Hello)");
                 *sh.peer_screen.lock().unwrap() = screen;
                 record_peer_screen(&name, screen);
                 if let Some(their_edge) = edge {
                     let have_own = sh.border.lock().unwrap().is_some();
-                    if adopt || !have_own {
+                    if refresh || adopt || !have_own {
                         let my_edge = opposite(their_edge);
                         let my_offset = -offset;
                         *sh.border.lock().unwrap() = Some(my_edge);
@@ -354,14 +376,28 @@ fn run_peer_input(
     udp: &InputChannel,
     rx: &Receiver<InputEvent>,
     sh: &Shared,
+    cfg_name: &str,
     mut peer: Option<SocketAddr>,
 ) -> anyhow::Result<()> {
     let control = &sh.control;
     let mut injector = crate::emit::Injector::new()?;
     let mut prev_my_away = false;
     let mut idle_ticks: u32 = 0;
+    let mut cfg_mtime = std::fs::metadata(Config::default_path()).and_then(|m| m.modified()).ok();
+    let mut cfg_ticks: u32 = 0;
     let mut buf = [0u8; 2048];
     loop {
+        // "Connect first, arrange after": watch the config; when the settings
+        // window saves, reload the arrangement live + push it to the peer.
+        cfg_ticks += 1;
+        if cfg_ticks > 1500 {
+            cfg_ticks = 0;
+            let m = std::fs::metadata(Config::default_path()).and_then(|m| m.modified()).ok();
+            if m != cfg_mtime {
+                cfg_mtime = m;
+                reload_arrangement(cfg_name, sh);
+            }
+        }
         // ---- receive from the peer ----
         if let Ok(Some((pkt, from))) = udp.recv(&mut buf) {
             if peer != Some(from) {
@@ -386,6 +422,7 @@ fn run_peer_input(
                         prev_my_away = false; // crossed paths: mine implicitly came home
                     }
                     control.peer_away.store(true, Ordering::Relaxed);
+                    control.host_armed.store(false, Ordering::Relaxed);
                     *control.host_span.lock().unwrap() = Some((edge, span));
                     let (ex, ey) = entry_point(edge, pos, sh.screen.0, sh.screen.1);
                     let _ = injector.move_to(ex, ey);
@@ -543,7 +580,7 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
 
         // Bulk channel: clipboard/files + Hello exchange (we send ours too, so
         // the dialer can adopt our arrangement).
-        let hello = my_hello(&cfg, &sh);
+        let hello = my_hello(&cfg.name, &sh, false);
         let sh_bulk = sh.clone();
         std::thread::spawn(move || {
             // Listener only adopts the peer's layout when it has none itself.
@@ -553,7 +590,7 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
         // Encrypted UDP input channel for this session.
         let udp = InputChannel::bind(bind_addr, None)?.with_cipher(Arc::new(input_sess));
         udp.set_read_timeout(Some(Duration::from_millis(1)))?;
-        if let Err(e) = run_peer_input(&udp, &rx, &sh, None) {
+        if let Err(e) = run_peer_input(&udp, &rx, &sh, &cfg.name, None) {
             tracing::warn!(error = %e, "input session ended; awaiting a new peer");
         }
     }
@@ -603,7 +640,7 @@ pub fn connect(server: Option<&str>) -> anyhow::Result<()> {
 
     // Bulk channel: clipboard/files + Hello exchange. The dialer adopts the
     // listener's arrangement, so you only configure the layout on one machine.
-    let hello = my_hello(&cfg, &sh);
+    let hello = my_hello(&cfg.name, &sh, false);
     let sh_bulk = sh.clone();
     std::thread::spawn(move || {
         if let Err(e) = serve_bulk(conn, Some(hello), sh_bulk, true) {
@@ -618,5 +655,5 @@ pub fn connect(server: Option<&str>) -> anyhow::Result<()> {
     channel.set_read_timeout(Some(Duration::from_millis(1)))?;
     channel.send(InputMsg::Ping { nonce: 0, echo_nanos: 0 })?;
 
-    run_peer_input(&channel, &rx, &sh, Some(server_addr))
+    run_peer_input(&channel, &rx, &sh, &cfg.name, Some(server_addr))
 }

@@ -39,21 +39,18 @@ pub fn run() -> anyhow::Result<()> {
 
     // Menu items — ids captured so we can match clicks.
     let item_status = MenuItem::new("ShareClick — idle", false, None);
-    let item_serve = MenuItem::new("Start Server (share this Mac/PC)", true, None);
-    let item_connect = MenuItem::new("Start Client (control from here)", true, None);
+    let item_start = MenuItem::new("Start (find & connect the other PC)", true, None);
     let item_settings = MenuItem::new("Settings & Monitor Manager…", true, None);
     let item_quit = MenuItem::new("Quit ShareClick", true, None);
 
-    let id_serve = item_serve.id().clone();
-    let id_connect = item_connect.id().clone();
+    let id_start = item_start.id().clone();
     let id_settings = item_settings.id().clone();
     let id_quit = item_quit.id().clone();
 
     let menu = Menu::new();
     menu.append(&item_status)?;
     menu.append(&PredefinedMenuItem::separator())?;
-    menu.append(&item_serve)?;
-    menu.append(&item_connect)?;
+    menu.append(&item_start)?;
     menu.append(&PredefinedMenuItem::separator())?;
     menu.append(&item_settings)?;
     menu.append(&PredefinedMenuItem::separator())?;
@@ -62,21 +59,10 @@ pub fn run() -> anyhow::Result<()> {
     // Behave like a background service: if the config already says which side
     // this machine is, start it automatically so the user doesn't have to click
     // Start every login. Without a role, wait for a menu choice.
-    match Config::load(&config_path).ok().and_then(|c| c.role).as_deref() {
-        Some("client") => {
-            item_status.set_text("ShareClick — client");
-            spawn_connect();
-        }
-        Some("server") => {
-            item_status.set_text("ShareClick — serving");
-            spawn_serve();
-        }
-        // No role set → zero-config auto-pairing.
-        _ => {
-            item_status.set_text("ShareClick — pairing…");
-            spawn_pair();
-        }
-    }
+    // One button, one behaviour: auto-pair (role in the config only decides who
+    // listens; control is symmetric either way). Starts immediately on launch.
+    item_status.set_text("ShareClick — pairing…");
+    spawn_pair();
 
     // The tray icon must be created after the loop starts on macOS, so we build
     // it lazily on the first `Init` event and keep it alive here (RAII).
@@ -105,12 +91,9 @@ pub fn run() -> anyhow::Result<()> {
             Event::UserEvent(UserEvent::Menu(ev)) => {
                 if ev.id == id_quit {
                     *control_flow = ControlFlow::Exit;
-                } else if ev.id == id_serve {
-                    item_status.set_text("ShareClick — serving");
-                    spawn_serve();
-                } else if ev.id == id_connect {
-                    item_status.set_text("ShareClick — client");
-                    spawn_connect();
+                } else if ev.id == id_start {
+                    item_status.set_text("ShareClick — pairing…");
+                    spawn_pair();
                 } else if ev.id == id_settings {
                     open_settings(&config_path);
                 }
@@ -132,29 +115,6 @@ fn build_event_loop() -> tao::event_loop::EventLoop<UserEvent> {
 #[cfg(not(target_os = "macos"))]
 fn build_event_loop() -> tao::event_loop::EventLoop<UserEvent> {
     EventLoopBuilder::<UserEvent>::with_user_event().build()
-}
-
-/// Start the server in a background thread, reading the address from config.
-fn spawn_serve() {
-    std::thread::spawn(|| {
-        let bind = format!(
-            "0.0.0.0:{}",
-            Config::load(&Config::default_path()).map(|c| c.port).unwrap_or(24800)
-        );
-        if let Err(e) = crate::run::serve(&bind) {
-            eprintln!("server error: {e}");
-        }
-    });
-}
-
-/// Start the client, dialing the `server_host` from the config.
-fn spawn_connect() {
-    std::thread::spawn(|| {
-        // `connect(None)` reads `server_host` from the config itself.
-        if let Err(e) = crate::run::connect(None) {
-            eprintln!("client error: {e} (set `server_host` in Settings)");
-        }
-    });
 }
 
 /// Zero-config auto-pairing in the background (find the peer + connect).

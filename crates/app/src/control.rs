@@ -36,6 +36,10 @@ pub struct Control {
     /// While `peer_away`: the edge the visitor entered through + the span along
     /// it where crossing back is allowed (from its `PointerEnter`).
     pub host_span: Mutex<Option<(Edge, (i32, i32))>>,
+    /// While `peer_away`: the visitor must move some distance IN from the entry
+    /// edge before a return-crossing is allowed — otherwise it bounces straight
+    /// back out (jitter/ping-pong at the border).
+    pub host_armed: AtomicBool,
 }
 
 impl Control {
@@ -47,6 +51,7 @@ impl Control {
             return_to: Mutex::new(None),
             send_peer_home: Mutex::new(None),
             host_span: Mutex::new(None),
+            host_armed: AtomicBool::new(false),
         }
     }
 }

@@ -206,6 +206,24 @@ pub fn run(
         if !control.my_away.load(Ordering::Relaxed) {
             if let EventType::MouseMove { x, y } = event.event_type {
                 let (xi, yi) = (x.round() as i32, y.round() as i32);
+                // Arm the visitor's return only after it moved IN from the entry
+                // edge — otherwise it would bounce straight back (border jitter).
+                if control.peer_away.load(Ordering::Relaxed)
+                    && !control.host_armed.load(Ordering::Relaxed)
+                {
+                    if let Some((e, _)) = *control.host_span.lock().unwrap() {
+                        const ARM: i32 = 60;
+                        let armed = match e {
+                            Edge::Left => xi > ARM,
+                            Edge::Right => xi < screen.0 as i32 - 1 - ARM,
+                            Edge::Top => yi > ARM,
+                            Edge::Bottom => yi < screen.1 as i32 - 1 - ARM,
+                        };
+                        if armed {
+                            control.host_armed.store(true, Ordering::Relaxed);
+                        }
+                    }
+                }
                 // Arrangement is LIVE: it may arrive/change via the peer's Hello.
                 let (edges, offset) = *arrangement.lock().unwrap();
                 if let Some(edge) = edges.hit(xi, yi) {
@@ -216,10 +234,11 @@ pub fn run(
                     };
                     if control.peer_away.load(Ordering::Relaxed) {
                         // The visitor leaves through the edge it entered, within
-                        // the span its PointerEnter allowed.
-                        let ok = control.host_span.lock().unwrap().map_or(false, |(e, span)| {
-                            e == edge && crate::edge::in_span(perp, span)
-                        });
+                        // the span its PointerEnter allowed — and only once armed.
+                        let ok = control.host_armed.load(Ordering::Relaxed)
+                            && control.host_span.lock().unwrap().map_or(false, |(e, span)| {
+                                e == edge && crate::edge::in_span(perp, span)
+                            });
                         if ok {
                             control.peer_away.store(false, Ordering::Relaxed);
                             *control.send_peer_home.lock().unwrap() = Some(perp);

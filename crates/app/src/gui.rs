@@ -10,6 +10,31 @@ use eframe::egui;
 
 use crate::config::{Config, Machine};
 
+/// A memorable, auto-generated pairing code — the user never has to invent a
+/// passphrase. Strong enough for a LAN PSK (≥ 64 bits of entropy).
+fn generate_code() -> String {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    let mut seed = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().subsec_nanos() as u64
+        ^ (std::process::id() as u64) << 32
+        ^ SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos() as u64;
+    let mut next = move || {
+        // xorshift64* — fine for a code; the real security is the X25519 handshake.
+        seed ^= seed << 13;
+        seed ^= seed >> 7;
+        seed ^= seed << 17;
+        seed
+    };
+    let words = ["blue", "nova", "lynx", "echo", "iris", "palm", "volt", "mesa", "rune", "kite",
+        "opal", "dune", "fern", "hawk", "jade", "luna", "onyx", "pine", "sage", "zinc"];
+    format!(
+        "{}-{}-{}-{:04}",
+        words[(next() % 20) as usize],
+        words[(next() % 20) as usize],
+        words[(next() % 20) as usize],
+        next() % 10000
+    )
+}
+
 /// Distance between the two monitor centres along the shared edge (canvas px).
 fn adjacency(side: Side, this: egui::Vec2, other: egui::Vec2) -> f32 {
     let gap = 3.0;
@@ -194,6 +219,11 @@ struct SettingsApp {
     other_name: String,
     server_host: String,
     role: String,
+    /// Show the passphrase in clear text (the "görüntüle" eye toggle).
+    show_psk: bool,
+    /// The other machine has connected at least once (its real screen size is
+    /// known) — the arrangement panel unlocks only then.
+    peer_known: bool,
     this_res: (u32, u32),
     other_w: String,
     other_h: String,
@@ -239,10 +269,12 @@ impl SettingsApp {
                         }
                     })
                     .unwrap_or(Side::Right);
+                let peer_known = c.machine(&other).and_then(|m| m.screen).is_some();
                 let other_res = c
                     .machine(&other)
                     .and_then(|m| m.screen)
                     .unwrap_or((1920, 1080));
+                let _ = peer_known;
                 (
                     this,
                     other,
@@ -260,7 +292,7 @@ impl SettingsApp {
                 "windows".into(),
                 Side::Right,
                 (1920, 1080),
-                "change-me-to-a-long-passphrase".into(),
+                generate_code(),
                 "24800".into(),
                 String::new(),
                 0,
@@ -282,6 +314,15 @@ impl SettingsApp {
             offset,
             placed: false,
             role,
+            show_psk: false,
+            peer_known: cfg
+                .as_ref()
+                .map(|c| {
+                    c.machines
+                        .iter()
+                        .any(|m| m.name != c.name && m.screen.is_some())
+                })
+                .unwrap_or(false),
             status: String::new(),
         }
     }
@@ -324,8 +365,21 @@ impl eframe::App for SettingsApp {
             ui.add_space(6.0);
 
             egui::Grid::new("fields").num_columns(2).spacing([12.0, 8.0]).show(ui, |ui| {
-                ui.label("Shared passphrase");
-                ui.add(egui::TextEdit::singleline(&mut self.psk).password(true).desired_width(280.0));
+                ui.label("Pairing code");
+                ui.horizontal(|ui| {
+                    ui.add(
+                        egui::TextEdit::singleline(&mut self.psk)
+                            .password(!self.show_psk)
+                            .desired_width(220.0),
+                    );
+                    let eye = if self.show_psk { "\u{1F441} hide" } else { "\u{1F441} view" };
+                    if ui.button(eye).clicked() {
+                        self.show_psk = !self.show_psk;
+                    }
+                    if ui.button("\u{21BB} new").clicked() {
+                        self.psk = generate_code();
+                    }
+                });
                 ui.end_row();
                 ui.label("Port");
                 ui.add(egui::TextEdit::singleline(&mut self.port).desired_width(100.0));
@@ -367,8 +421,29 @@ impl eframe::App for SettingsApp {
             });
 
             ui.add_space(10.0);
-            ui.label("Arrange the screens — drag the second monitor to where it sits:");
-            self.arrangement(ui);
+            if self.peer_known {
+                ui.label("Arrange the screens — drag the second monitor to where it sits:");
+                self.arrangement(ui);
+                ui.label(
+                    egui::RichText::new(
+                        "Changes apply live — no restart needed. Only set this on one machine; the other follows.",
+                    )
+                    .size(11.0)
+                    .color(egui::Color32::from_gray(120)),
+                );
+            } else {
+                ui.add_space(6.0);
+                ui.group(|ui| {
+                    ui.label("\u{1F517}  Connect the two machines first");
+                    ui.label(
+                        egui::RichText::new(
+                            "Press Start on both machines (same pairing code). Once they've met, \
+                             the real screen sizes are known and the arrangement unlocks here.",
+                        )
+                        .size(12.0),
+                    );
+                });
+            }
 
             ui.add_space(12.0);
             ui.horizontal(|ui| {
