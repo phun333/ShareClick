@@ -238,11 +238,19 @@ pub fn pair() -> anyhow::Result<()> {
     let cfg = load_config()?;
     let me = cfg.name.clone();
     let port = cfg.port;
-    // Keep advertising for the whole search so the peer can find us too.
-    let _advert = discovery::advertise(&me, port)
-        .map_err(|e| tracing::warn!(error = %e, "mDNS advertise failed"))
-        .ok();
-    tracing::info!(name = %me, "auto-pairing: advertising and searching for a peer…");
+
+    // Listen + advertise IMMEDIATELY (serve does both) — so even if WE can't
+    // see the peer (its mDNS blocked by a firewall), the peer can still find
+    // and dial US. Browsing below only decides whether WE should dial.
+    {
+        let bind = format!("0.0.0.0:{port}");
+        std::thread::spawn(move || {
+            if let Err(e) = serve(&bind) {
+                tracing::warn!(error = %e, "listener stopped");
+            }
+        });
+    }
+    tracing::info!(name = %me, "auto-pairing: listening, advertising and searching…");
 
     let my_prefix = format!("{me}.");
     loop {
@@ -250,29 +258,24 @@ pub fn pair() -> anyhow::Result<()> {
         if let Some((fullname, addr)) = peers.into_iter().find(|(n, _)| !n.starts_with(&my_prefix))
         {
             let peer = fullname.split('.').next().unwrap_or("peer").to_string();
-            // ALWAYS the deterministic name tiebreaker — never the config role.
-            // (If both configs said "server", both would listen forever and the
-            // pairing would deadlock; control is symmetric anyway, so who
-            // listens is irrelevant.)
-            let am_server = me < peer;
-            drop(_advert); // serve() re-advertises; avoid a name conflict
-            if am_server {
-                tracing::info!(%peer, "paired — running as server");
-                return serve(&format!("0.0.0.0:{port}"));
-            }
-            tracing::info!(%peer, %addr, "paired — running as client");
-            // The server may still be starting; retry until it answers.
-            loop {
-                match connect(Some(&addr.to_string())) {
-                    Ok(()) => return Ok(()),
-                    Err(e) => {
+            // Deterministic tiebreaker: exactly one side dials.
+            if me > peer {
+                tracing::info!(%peer, %addr, "paired — dialing");
+                loop {
+                    if let Err(e) = connect(Some(&addr.to_string())) {
                         tracing::warn!(error = %e, "connect failed; retrying in 2s");
                         std::thread::sleep(Duration::from_secs(2));
                     }
                 }
             }
+            // me < peer: we're the listener; the peer dials us (serve thread is
+            // already up). Just park here.
+            tracing::info!(%peer, "paired — the peer will connect to us");
+            loop {
+                std::thread::sleep(Duration::from_secs(3600));
+            }
         }
-        tracing::info!("no peer found yet; still searching…");
+        tracing::info!("no peer found yet; still searching… (the peer may still find US)");
     }
 }
 
