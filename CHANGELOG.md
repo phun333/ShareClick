@@ -8,6 +8,24 @@ All notable changes to ShareClick are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **Symmetric control (ShareMouse-style)** — both machines are equals: use
+  EITHER machine's mouse & keyboard, whichever you grab. Exactly one pointer is
+  "away" at a time; the visited machine's real cursor is driven directly, so
+  crossings feel like real adjacent monitors. (Protocol v4.)
+- **Zero-config auto-pairing** — both machines advertise + search on the LAN
+  and connect automatically: no IPs, no role picking (`shareclick pair`, and
+  the default when no role is set).
+- **One-machine layout setup** — the monitor arrangement is exchanged in the
+  handshake; the other machine adopts the mirrored layout automatically.
+- **Real-monitor overlap edges** — crossing only happens where the two screens
+  actually overlap (with the arrangement offset); elsewhere the edge is a wall.
+- **Fully dynamic screen sizes** — always live-detected, reported in the
+  handshake, never typed by hand.
+- **Background service** — `shareclick install-service` auto-starts ShareClick
+  on login (macOS LaunchAgent / Windows startup), no terminal needed.
+- **Server/Client/auto role selector** + no-overlap monitor arrangement UI.
+- **Brand icon** everywhere: tray, settings window, site favicon, macOS .app
+  icon and the Windows .exe/installer icon.
 - **Seamless macOS cursor switching** — while the client has control the local
   Mac cursor is hidden and pinned (Deskflow technique: `SetsCursorInBackground`
   + warp-to-centre + live position), so the pointer truly *leaves* one screen
