@@ -1,220 +1,85 @@
-# ShareClick
+<div align="center">
 
-**A low-latency, open-source software KVM.** Move one keyboard & mouse — plus
-the clipboard and files — between your macOS and Windows machines over the LAN,
-with the lowest input lag we can squeeze out.
+<img src="https://raw.githubusercontent.com/phun333/ShareClick/main/site/og.png" alt="ShareClick — a low-latency, open-source software KVM for macOS and Windows" width="100%" />
 
-Think ShareMouse / Synergy / Deskflow, but free, open, and built for latency
-first. A free **alternative to Synergy, ShareMouse, Barrier and Input Leap**, the
-Mac-capable answer to **Mouse Without Borders**, and effectively **Universal
-Control for Windows** — share one keyboard, mouse, clipboard and files across
-Mac and Windows over your LAN, end-to-end encrypted.
+<h1>ShareClick</h1>
 
-**Website:** https://phun333.github.io/ShareClick/ · **What is a software KVM?**
-https://phun333.github.io/ShareClick/what-is-a-software-kvm.html
+**A low-latency, open-source software KVM.** Move one keyboard & mouse — plus the
+clipboard and files — between your **macOS** and **Windows** machines over the
+LAN, end-to-end encrypted, with the lowest input lag we can squeeze out.
 
-## Download & install (no Rust required)
+[![Download](https://img.shields.io/badge/⬇_Download-2563eb?style=for-the-badge)](https://github.com/phun333/ShareClick/releases)
+[![Docs](https://img.shields.io/badge/📖_Docs-1d4ed8?style=for-the-badge)](https://shareclick.mintlify.app)
+[![Website](https://img.shields.io/badge/🌐_Website-60a5fa?style=for-the-badge)](https://phun333.github.io/ShareClick/)
 
-Grab the installer for your OS from the
-[**Releases**](https://github.com/phun333/ShareClick/releases) page:
+![License](https://img.shields.io/badge/license-MIT_%2F_Apache--2.0-green)
+![Platforms](https://img.shields.io/badge/platforms-macOS_%7C_Windows-lightgrey)
+![Latency](https://img.shields.io/badge/transport-~6µs_one--way-blueviolet)
 
-- **macOS:** `ShareClick-*.dmg` → open, drag **ShareClick** to Applications, then
-  grant **Accessibility** + **Input Monitoring**.
-- **Windows:** `ShareClick-Setup-*.exe` → run it (no admin needed).
-
-**Or via a package manager:**
-
-- **macOS (Homebrew):** `brew install --cask phun333/tap/shareclick`
-- **Windows (Scoop):** `scoop install https://raw.githubusercontent.com/phun333/ShareClick/main/packaging/scoop/shareclick.json`
-
-> ⚠️ **The builds are unsigned** (no paid Apple/Microsoft certificate), so your
-> OS shows a one-time warning. This is normal for open-source apps and easy to
-> get past — **[full step-by-step in docs/INSTALL.md](./docs/INSTALL.md)**.
-> macOS quick fix if it says "damaged": `xattr -cr /Applications/ShareClick.app`.
-
-## How to use it (60 seconds)
-
-On **both** machines: open ShareClick (menu-bar on macOS, system tray on
-Windows) → **Settings & Monitor Manager** → set the **same passphrase** and your
-screen layout → save. Then on the machine with the keyboard/mouse click **Start
-Server**, and on the other click **Start Client**. Push your mouse into the
-shared screen edge to jump across; copy/paste and files sync automatically.
-
-👉 **Full step-by-step (macOS + Windows, UI and terminal): [docs/USAGE.md](./docs/USAGE.md).**
-
-Building from source is only needed for development — see [docs/](./docs/).
-
-## Compare with alternatives
-
-- [ShareClick vs Synergy](https://phun333.github.io/ShareClick/vs-synergy.html)
-- [ShareClick vs ShareMouse](https://phun333.github.io/ShareClick/vs-sharemouse.html)
-- [ShareClick vs Barrier](https://phun333.github.io/ShareClick/vs-barrier.html)
-- [ShareClick vs Input Leap](https://phun333.github.io/ShareClick/vs-input-leap.html)
-- [ShareClick vs Mouse Without Borders](https://phun333.github.io/ShareClick/vs-mouse-without-borders.html)
-- [ShareClick vs Universal Control](https://phun333.github.io/ShareClick/vs-universal-control.html)
-
-## Documentation
-
-Full docs live in [**docs/**](./docs/README.md): architecture, wire protocol,
-security model, development guide, release process, decision log, and build
-history. Changelog: [CHANGELOG.md](./CHANGELOG.md).
-
-A polished, AI/LLM-friendly documentation site (built with **Mintlify**) lives in
-[**mintlify/**](./mintlify/README.md) — run `npx mint@latest dev` in that folder
-to preview it locally.
+</div>
 
 ---
 
-## Why another one?
+A free **alternative to Synergy, ShareMouse, Barrier and Input Leap**, the
+Mac-capable answer to **Mouse Without Borders**, and effectively **Universal
+Control for Windows**.
 
-We surveyed everything in this space before writing a line of code:
+- ⌨️ **One keyboard & mouse** — push your cursor across the screen edge to control the other machine.
+- 📋 **Shared clipboard** — copy on one machine, paste on the other (text + images).
+- 📁 **Drag-and-drop files** — reliable, chunked transfer between machines.
+- 🔒 **End-to-end encrypted** — X25519 + a shared passphrase + ChaCha20-Poly1305. LAN-only, no cloud, no accounts.
+- ⚡ **Latency-first** — dedicated UDP input path, ~6 µs one-way transport overhead.
 
-| Tool | License | Mouse/KB | Clipboard | Files | Notes |
-|------|---------|:--------:|:---------:|:-----:|-------|
-| **ShareMouse** | 💰 Paid | ✅ | ✅ | ✅ | Nice UX, but licensed |
-| **Synergy** | 💰 Paid | ✅ | ✅ | ✅ | Built on Deskflow |
-| **Deskflow** | 🟢 GPLv2 | ✅ | ✅ | ⚠️ | Most mature free option |
-| **Input Leap** | 🟢 GPLv2 | ✅ | ✅ | ⚠️ | Living Barrier fork |
-| **Barrier** | 🟢 | ✅ | ✅ | ❌ | ⛔ Unmaintained |
-| **Lan Mouse** | 🟢 | ✅ | ❌ | ❌ | Fastest/cleanest, but input-only |
-| **ShareClick** | 🟢 MIT/Apache | ✅ | 🛠️ | 🛠️ | Latency-first, taking the best of all |
+## Install
 
-**What we took from each:**
-
-- **Lan Mouse** → UDP input path + active/inactive state model → lowest latency.
-- **Deskflow/Synergy** → portable key IDs, clipboard & file transfer features.
-- **ShareMouse** → the UX goal: drag-and-drop files should "just work".
-
-## Architecture
-
-Two logical channels, each optimized for its job:
-
-```
-        macOS (server)                         Windows (client)
-   ┌───────────────────────┐   UDP input    ┌───────────────────────┐
-   │ rdev capture          │ ─────────────▶ │ enigo injection       │
-   │  → portable Key/mouse  │  (tiny, seq-#, │  ← portable Key/mouse  │
-   │  → coalesced per tick  │   dedup'd)     │                       │
-   ├───────────────────────┤  TCP bulk      ├───────────────────────┤
-   │ clipboard / files      │ ◀────────────▶ │ clipboard / files      │
-   └───────────────────────┘  (reliable)    └───────────────────────┘
-```
-
-- **Input channel (UDP):** dedicated blocking socket (no async scheduler
-  jitter), postcard-encoded packets, monotonic sequence numbers so late/dup
-  packets are dropped instead of blocking. Events are **coalesced per poll
-  tick** to avoid the classic "jumpiness" when mouse polling rate exceeds the
-  display refresh rate.
-- **Bulk channel (reliable):** clipboard sync and chunked file transfer, where
-  ordering matters more than microseconds.
-- **Portable keys:** macOS and Windows use different raw keycodes, so we
-  translate native keys into a portable `Key` enum on capture and back on
-  injection (same idea as Synergy's key IDs).
-
-### Measured latency
-
-Transport overhead is negligible — the OS event path and LAN dominate:
-
-```
-$ shareclick bench --count 20000
-METRIC rtt_median_us=~12     # loopback round-trip
-METRIC oneway_us=~6          # one-way transport overhead
-```
-
-~6 µs one-way transport overhead means our code is not the bottleneck; real
-input lag will be LAN RTT (~0.2–1 ms) + OS injection. We keep the bench in the
-repo so latency regressions get caught immediately.
-
-## Build & run
-
-Requires [Rust](https://rustup.rs). Native input needs OS permission:
-**macOS** → System Settings ▸ Privacy & Security ▸ Accessibility (add your
-terminal / the binary). **Windows** → run once, allow through the firewall.
-
+**macOS (Homebrew)**
 ```bash
-# Build
-cargo build --release
-
-# Benchmark the input transport (no permissions needed)
-./target/release/shareclick bench --count 20000
-
-# On the machine whose keyboard & mouse you want to share:
-./target/release/shareclick serve --bind 0.0.0.0:24800
-#   → press F12 to hand control to the client; F12 again to reclaim it.
-#     While the client has control, local input on the server is suppressed.
-
-# On the other machine (explicit host):
-./target/release/shareclick connect 192.168.1.20:24800
-#   … or omit the host to auto-discover the server over mDNS:
-./target/release/shareclick connect
-#   … or list servers on the network:
-./target/release/shareclick discover
-
-# Send a file to a peer (clipboard syncs automatically once connected):
-./target/release/shareclick send-file 192.168.1.20:24800 ./report.pdf
-#   → lands in ./received on the peer.
+brew install --cask phun333/tap/shareclick
 ```
 
-### Settings, encryption & the monitor manager
-
-```bash
-# Create an editable config (settings + monitor-manager layout):
-./target/release/shareclick init-config
-#   → set a strong `psk` (identical on both machines — it authenticates the
-#     peers and derives the ChaCha20-Poly1305 session keys) and describe which
-#     machine borders which screen edge. serve/connect then require this file.
+**Windows (Scoop)**
+```powershell
+scoop install https://raw.githubusercontent.com/phun333/ShareClick/main/packaging/scoop/shareclick.json
 ```
 
-The **monitor manager** is the `[[machines]]` layout: each machine lists its
-screen size and which peer sits on each edge. When `auto_edge_switch` is on,
-pushing the cursor into a bordered edge hands control to that neighbour.
+Or grab the installer from the [**Releases**](https://github.com/phun333/ShareClick/releases) page.
 
-### Menu-bar / tray app
+> ⚠️ Builds are **unsigned** (no paid Apple/Microsoft certificate), so your OS
+> shows a one-time warning. It's safe and easy to get past — see the
+> [installation docs](https://shareclick.mintlify.app/installation).
 
-```bash
-# Build with the GUI front-end and launch it:
-cargo build --release --features tray
-./target/release/shareclick tray
-```
+## Use it in 60 seconds
 
-* **macOS:** a status item appears in the top-right menu bar (no dock icon).
-* **Windows:** an icon appears in the system tray.
+On **both** machines: open ShareClick (menu-bar on macOS, system tray on
+Windows) → **Settings & Monitor Manager** → set the **same passphrase** and your
+screen layout → save. Then push your mouse into the shared screen edge to jump
+across; copy/paste and files sync automatically.
 
-The menu exposes Start Server / Start Client, **Settings & Monitor Manager…**
-(opens `config.toml`), and Quit.
+👉 **Full walkthrough in the [Quickstart](https://shareclick.mintlify.app/quickstart).**
 
-Build the portable core without native deps (for CI / headless):
+## How it compares
 
-```bash
-cargo build --release -p shareclick --no-default-features
-```
+| Tool | License | Mouse/KB | Clipboard | Files |
+|------|---------|:--------:|:---------:|:-----:|
+| ShareMouse | 💰 Paid | ✅ | ✅ | ✅ |
+| Synergy | 💰 Paid | ✅ | ✅ | ✅ |
+| Deskflow | 🟢 GPLv2 | ✅ | ✅ | ⚠️ |
+| Input Leap | 🟢 GPLv2 | ✅ | ✅ | ⚠️ |
+| Barrier | 🟢 (archived) | ✅ | ✅ | ❌ |
+| Lan Mouse | 🟢 | ✅ | ❌ | ❌ |
+| **ShareClick** | 🟢 **MIT/Apache** | ✅ | ✅ | ✅ |
 
-## Roadmap
+See the full [comparisons](https://shareclick.mintlify.app/compare/overview).
 
-- [x] Hybrid UDP/reliable transport with sequence numbers
-- [x] Latency benchmark harness
-- [x] Native input capture (rdev) + injection (enigo)
-- [x] Portable cross-platform key mapping
-- [x] Control handoff hotkey (F12) + local input suppression (`rdev` grab)
-- [x] Clipboard sync (text) over the bulk channel
-- [x] File transfer (`send-file`, chunked, resumable-by-offset)
-- [x] Encryption: X25519 + PSK handshake + ChaCha20-Poly1305 on both channels
-      (measured ~20 ns extra latency — see the encrypted benchmark)
-- [x] Settings + monitor manager (`config.toml`)
-- [x] Automatic edge-switching (cursor crosses a bordered screen edge)
-- [x] Client-side return-edge detection (auto reclaim, no F12 either way)
-- [x] Menu-bar (macOS) / system-tray (Windows) app (`--features tray`)
-- [x] Clipboard images (raw RGBA)
-- [x] mDNS auto-discovery (`_shareclick._udp`)
-- [ ] Packaging (.app / .msi) & GUI settings editor
-- [ ] Multiple simultaneous clients
-- [ ] Multi-monitor / multi-client layouts
-- [ ] Auto-discovery (mDNS) so you don't type IPs
-- [ ] Tray app / GUI
+## Documentation
 
-See [`autoresearch.ideas.md`](./autoresearch.ideas.md) for deeper technical
-notes and optimization ideas.
+Everything lives in the **[docs site](https://shareclick.mintlify.app)** —
+install, usage, configuration, troubleshooting, architecture, wire protocol,
+security model, and contributor guides.
+
+Building from source? See the [development guide](https://shareclick.mintlify.app/develop/development).
+The Mintlify source lives in [`mintlify/`](./mintlify/README.md).
 
 ## License
 
-Dual-licensed under MIT or Apache-2.0.
+Dual-licensed under **MIT** or **Apache-2.0** — your choice.

@@ -22,6 +22,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:24p
 header .home{color:var(--ink);font-weight:700;letter-spacing:-.02em;display:inline-flex;align-items:center;gap:9px}
 header .home:hover{text-decoration:none;opacity:.8}
 .hnav{display:flex;align-items:center;gap:18px;margin-left:auto}
+header a.doclink{color:var(--muted);font-weight:600;font-size:15px;transition:color .15s ease}
+@media (hover:hover) and (pointer:fine){header a.doclink:hover{color:var(--ink);text-decoration:none}}
 header a.icon{color:var(--muted);display:inline-flex;transition:color .15s ease,transform .16s var(--ease-out)}
 header a.icon:active{transform:scale(0.9)}
 @media (hover:hover) and (pointer:fine){header a.icon:hover{color:var(--ink)}}
