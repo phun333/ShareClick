@@ -1,0 +1,26 @@
+#!/bin/sh
+# Fast pre-commit checks. Heavy checks (clippy, tests) run in CI.
+set -e
+
+# Only run Rust checks if staged .rs or Cargo files changed
+if git diff --cached --name-only | grep -Eq '\.(rs)$|^Cargo\.(toml|lock)$|/Cargo\.toml$'; then
+  echo "→ cargo fmt --check"
+  if ! cargo fmt --all -- --check >/dev/null 2>&1; then
+    echo "✖ Formatting issues found. Run: cargo fmt --all" >&2
+    cargo fmt --all -- --check 2>&1 | head -20 >&2
+    exit 1
+  fi
+fi
+
+# Block accidental large files (>5 MB)
+for f in $(git diff --cached --name-only --diff-filter=A); do
+  if [ -f "$f" ]; then
+    size=$(wc -c < "$f")
+    if [ "$size" -gt 5242880 ]; then
+      echo "✖ $f is larger than 5 MB. Use a release asset or Git LFS instead." >&2
+      exit 1
+    fi
+  fi
+done
+
+echo "✓ pre-commit checks passed"

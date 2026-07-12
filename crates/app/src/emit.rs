@@ -49,7 +49,11 @@ impl Injector {
             }
             InputEvent::MouseButton { button, pressed } => {
                 let b = to_enigo_button(button);
-                let dir = if pressed { Direction::Press } else { Direction::Release };
+                let dir = if pressed {
+                    Direction::Press
+                } else {
+                    Direction::Release
+                };
                 self.enigo
                     .button(b, dir)
                     .map_err(|e| anyhow::anyhow!("button: {e:?}"))?;
@@ -84,7 +88,11 @@ impl Injector {
                     k => k,
                 };
                 if let Some(k) = keymap::to_enigo(key) {
-                    let dir = if pressed { Direction::Press } else { Direction::Release };
+                    let dir = if pressed {
+                        Direction::Press
+                    } else {
+                        Direction::Release
+                    };
                     self.enigo
                         .key(k, dir)
                         .map_err(|e| anyhow::anyhow!("key: {e:?}"))?;

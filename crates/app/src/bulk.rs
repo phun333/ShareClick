@@ -140,7 +140,11 @@ mod tests {
         let msgs = vec![
             BulkMsg::Clipboard(ClipboardData::Text("hello world".into())),
             BulkMsg::Heartbeat,
-            BulkMsg::FileBegin { id: 7, name: "a.txt".into(), size: 12 },
+            BulkMsg::FileBegin {
+                id: 7,
+                name: "a.txt".into(),
+                size: 12,
+            },
         ];
         for m in &msgs {
             client.send(m).unwrap();
@@ -169,7 +173,11 @@ mod tests {
         let msgs = vec![
             BulkMsg::Clipboard(ClipboardData::Text("encrypted!".into())),
             BulkMsg::Heartbeat,
-            BulkMsg::FileChunk { id: 1, offset: 0, data: vec![1, 2, 3, 4] },
+            BulkMsg::FileChunk {
+                id: 1,
+                offset: 0,
+                data: vec![1, 2, 3, 4],
+            },
         ];
         for m in &msgs {
             client.send(m).unwrap();

@@ -23,8 +23,15 @@ pub struct Advertiser {
 pub fn advertise(name: &str, port: u16) -> anyhow::Result<Advertiser> {
     let daemon = ServiceDaemon::new()?;
     let host_name = format!("{name}.local.");
-    let info = ServiceInfo::new(SERVICE_TYPE, name, &host_name, "", port, &[] as &[(&str, &str)])?
-        .enable_addr_auto();
+    let info = ServiceInfo::new(
+        SERVICE_TYPE,
+        name,
+        &host_name,
+        "",
+        port,
+        &[] as &[(&str, &str)],
+    )?
+    .enable_addr_auto();
     daemon.register(info)?;
     tracing::info!(%name, port, "advertising on mDNS as {SERVICE_TYPE}");
     Ok(Advertiser { _daemon: daemon })

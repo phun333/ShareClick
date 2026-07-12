@@ -33,7 +33,14 @@ impl EdgeConfig {
 
     /// No neighbours anywhere (auto edge-switching effectively disabled).
     pub fn none() -> Self {
-        Self { width: 0, height: 0, left: false, right: false, top: false, bottom: false }
+        Self {
+            width: 0,
+            height: 0,
+            left: false,
+            right: false,
+            top: false,
+            bottom: false,
+        }
     }
 
     /// If the cursor at `(x, y)` sits on an edge that has a neighbour, return

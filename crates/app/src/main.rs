@@ -16,24 +16,28 @@ mod capture;
 #[cfg(feature = "native")]
 mod clipboard;
 #[cfg(feature = "native")]
+mod discovery;
+#[cfg(feature = "native")]
 mod emit;
+#[cfg(feature = "gui")]
+mod gui;
 #[cfg(feature = "native")]
 mod keymap;
-#[cfg(feature = "native")]
-mod discovery;
 #[cfg(feature = "native")]
 mod run;
 #[cfg(feature = "native")]
 mod service;
-#[cfg(feature = "gui")]
-mod gui;
 #[cfg(feature = "tray")]
 mod tray;
 
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "shareclick", version, about = "Low-latency open-source software KVM")]
+#[command(
+    name = "shareclick",
+    version,
+    about = "Low-latency open-source software KVM"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Option<Command>,
@@ -113,8 +117,7 @@ fn hide_console_window() {
 fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info".into()),
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
         )
         .init();
 
@@ -150,7 +153,9 @@ fn main() -> anyhow::Result<()> {
         Command::Connect { server } => run::connect(server.as_deref()),
         #[cfg(not(feature = "native"))]
         Command::Serve { .. } | Command::Connect { .. } => {
-            anyhow::bail!("serve/connect require the `native` feature (build without --no-default-features)")
+            anyhow::bail!(
+                "serve/connect require the `native` feature (build without --no-default-features)"
+            )
         }
         #[cfg(feature = "native")]
         Command::Pair => {
@@ -220,14 +225,19 @@ fn main() -> anyhow::Result<()> {
         Command::Tray => tray::run(),
         #[cfg(not(feature = "tray"))]
         Command::Tray => {
-            anyhow::bail!("tray UI not built in; rebuild with `cargo build --release --features tray`")
+            anyhow::bail!(
+                "tray UI not built in; rebuild with `cargo build --release --features tray`"
+            )
         }
         Command::InitConfig { path } => {
             let path = path
                 .map(std::path::PathBuf::from)
                 .unwrap_or_else(config::Config::default_path);
             if path.exists() {
-                anyhow::bail!("config already exists at {} (refusing to overwrite)", path.display());
+                anyhow::bail!(
+                    "config already exists at {} (refusing to overwrite)",
+                    path.display()
+                );
             }
             config::Config::example().save(&path)?;
             println!("wrote starter config to {}", path.display());

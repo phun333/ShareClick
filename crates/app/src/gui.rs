@@ -14,9 +14,15 @@ use crate::config::{Config, Machine};
 /// passphrase. Strong enough for a LAN PSK (≥ 64 bits of entropy).
 fn generate_code() -> String {
     use std::time::{SystemTime, UNIX_EPOCH};
-    let mut seed = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().subsec_nanos() as u64
+    let mut seed = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .subsec_nanos() as u64
         ^ (std::process::id() as u64) << 32
-        ^ SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos() as u64;
+        ^ SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos() as u64;
     let mut next = move || {
         // xorshift64* — fine for a code; the real security is the X25519 handshake.
         seed ^= seed << 13;
@@ -24,8 +30,10 @@ fn generate_code() -> String {
         seed ^= seed << 17;
         seed
     };
-    let words = ["blue", "nova", "lynx", "echo", "iris", "palm", "volt", "mesa", "rune", "kite",
-        "opal", "dune", "fern", "hawk", "jade", "luna", "onyx", "pine", "sage", "zinc"];
+    let words = [
+        "blue", "nova", "lynx", "echo", "iris", "palm", "volt", "mesa", "rune", "kite", "opal",
+        "dune", "fern", "hawk", "jade", "luna", "onyx", "pine", "sage", "zinc",
+    ];
     format!(
         "{}-{}-{}-{:04}",
         words[(next() % 20) as usize],
@@ -69,17 +77,31 @@ fn snap_rel(side: Side, rel: egui::Vec2, this: egui::Vec2, other: egui::Vec2) ->
 }
 
 /// Real-pixel offset (other screen's top/left vs this screen's) from placement.
-fn offset_from_rel(side: Side, rel: egui::Vec2, this: egui::Vec2, other: egui::Vec2, scale: f32) -> i32 {
+fn offset_from_rel(
+    side: Side,
+    rel: egui::Vec2,
+    this: egui::Vec2,
+    other: egui::Vec2,
+    scale: f32,
+) -> i32 {
     let off_canvas = match side {
         Side::Left | Side::Right => rel.y - (other.y - this.y) / 2.0,
         Side::Top | Side::Bottom => rel.x - (other.x - this.x) / 2.0,
     };
-    if scale <= 0.0 { 0 } else { (off_canvas / scale).round() as i32 }
+    if scale <= 0.0 {
+        0
+    } else {
+        (off_canvas / scale).round() as i32
+    }
 }
 
 /// Push `other_center` out of `this_rect` (plus a tiny gap) so the two monitors
 /// never overlap — the second monitor's edge collides with the first's.
-fn resolve_overlap(this: egui::Rect, other_center: egui::Pos2, other_size: egui::Vec2) -> egui::Pos2 {
+fn resolve_overlap(
+    this: egui::Rect,
+    other_center: egui::Pos2,
+    other_size: egui::Vec2,
+) -> egui::Pos2 {
     let gap = 2.0;
     let other = egui::Rect::from_center_size(other_center, other_size);
     let overlap_x = this.max.x.min(other.max.x) - this.min.x.max(other.min.x);
@@ -90,17 +112,29 @@ fn resolve_overlap(this: egui::Rect, other_center: egui::Pos2, other_size: egui:
     let mut c = other_center;
     if overlap_x < overlap_y {
         let push = overlap_x + gap;
-        if other_center.x >= this.center().x { c.x += push; } else { c.x -= push; }
+        if other_center.x >= this.center().x {
+            c.x += push;
+        } else {
+            c.x -= push;
+        }
     } else {
         let push = overlap_y + gap;
-        if other_center.y >= this.center().y { c.y += push; } else { c.y -= push; }
+        if other_center.y >= this.center().y {
+            c.y += push;
+        } else {
+            c.y -= push;
+        }
     }
     c
 }
 
 fn dominant_side(rel: egui::Vec2) -> Side {
     if rel.x.abs() > rel.y.abs() {
-        if rel.x > 0.0 { Side::Right } else { Side::Left }
+        if rel.x > 0.0 {
+            Side::Right
+        } else {
+            Side::Left
+        }
     } else if rel.y > 0.0 {
         Side::Bottom
     } else {
@@ -121,7 +155,12 @@ fn set_side(m: &mut Machine, side: Side, neighbour: &str) {
 /// Build the two machine entries for an arrangement: `this` borders `other` on
 /// `side`, and reciprocally `other` borders `this` on the opposite side. Pure so
 /// it can be unit-tested without the GUI.
-fn layout(this_name: &str, other_name: &str, other_res: (u32, u32), side: Side) -> (Machine, Machine) {
+fn layout(
+    this_name: &str,
+    other_name: &str,
+    other_res: (u32, u32),
+    side: Side,
+) -> (Machine, Machine) {
     let mut this = Machine {
         name: this_name.into(),
         screen: None,
@@ -329,8 +368,12 @@ impl SettingsApp {
             self.other_w.trim().parse().unwrap_or(1920),
             self.other_h.trim().parse().unwrap_or(1080),
         );
-        let (this, other) =
-            layout(self.this_name.trim(), self.other_name.trim(), other_res, self.side);
+        let (this, other) = layout(
+            self.this_name.trim(),
+            self.other_name.trim(),
+            other_res,
+            self.side,
+        );
 
         let cfg = Config {
             name: this.name.clone(),
@@ -459,7 +502,11 @@ impl SettingsApp {
         let (canvas, _) = ui.allocate_exact_size(egui::vec2(500.0, 280.0), egui::Sense::hover());
         let painter = ui.painter_at(canvas);
         painter.rect_filled(canvas, 10.0, egui::Color32::from_gray(238));
-        painter.rect_stroke(canvas, 10.0, egui::Stroke::new(1.0, egui::Color32::from_gray(220)));
+        painter.rect_stroke(
+            canvas,
+            10.0,
+            egui::Stroke::new(1.0, egui::Color32::from_gray(220)),
+        );
 
         let this_res = egui::vec2(self.this_res.0 as f32, self.this_res.1 as f32);
         let other_res = egui::vec2(
@@ -516,10 +563,21 @@ impl SettingsApp {
 
         // This monitor (blue, fixed).
         painter.rect_filled(this_rect, 6.0, blue);
-        label(&painter, this_rect, &self.this_name, self.this_res.0, self.this_res.1, egui::Color32::WHITE);
+        label(
+            &painter,
+            this_rect,
+            &self.this_name,
+            self.this_res.0,
+            self.this_res.1,
+            egui::Color32::WHITE,
+        );
 
         // Other monitor (draggable, grey).
-        let resp = ui.interact(other_rect, ui.make_persistent_id("other_mon"), egui::Sense::drag());
+        let resp = ui.interact(
+            other_rect,
+            ui.make_persistent_id("other_mon"),
+            egui::Sense::drag(),
+        );
         if resp.dragged() {
             self.drag += resp.drag_delta();
         }
@@ -535,7 +593,18 @@ impl SettingsApp {
             egui::Color32::from_gray(150)
         };
         painter.rect_filled(other_rect, 6.0, fill);
-        painter.rect_stroke(other_rect, 6.0, egui::Stroke::new(1.5, egui::Color32::from_gray(90)));
-        label(&painter, other_rect, &self.other_name, other_res.x as u32, other_res.y as u32, egui::Color32::WHITE);
+        painter.rect_stroke(
+            other_rect,
+            6.0,
+            egui::Stroke::new(1.5, egui::Color32::from_gray(90)),
+        );
+        label(
+            &painter,
+            other_rect,
+            &self.other_name,
+            other_res.x as u32,
+            other_res.y as u32,
+            egui::Color32::WHITE,
+        );
     }
 }

@@ -79,7 +79,10 @@ pub fn run(count: usize, encrypted: bool) -> anyhow::Result<()> {
 
     // Warm up the path (page faults, socket buffers, branch predictors).
     for n in 0..64u64 {
-        sender.send(InputMsg::Ping { nonce: n, echo_nanos: now_nanos(start) })?;
+        sender.send(InputMsg::Ping {
+            nonce: n,
+            echo_nanos: now_nanos(start),
+        })?;
         let _ = sender.recv(&mut buf);
     }
 
@@ -87,7 +90,10 @@ pub fn run(count: usize, encrypted: bool) -> anyhow::Result<()> {
     let mut lost = 0usize;
     for n in 0..count as u64 {
         let t0 = Instant::now();
-        sender.send(InputMsg::Ping { nonce: n, echo_nanos: now_nanos(start) })?;
+        sender.send(InputMsg::Ping {
+            nonce: n,
+            echo_nanos: now_nanos(start),
+        })?;
         match sender.recv(&mut buf) {
             Ok(Some((pkt, _))) => match pkt.msg {
                 InputMsg::Pong { .. } => rtts_ns.push(t0.elapsed().as_nanos() as u64),
@@ -108,13 +114,17 @@ pub fn run(count: usize, encrypted: bool) -> anyhow::Result<()> {
         let idx = ((rtts_ns.len() as f64 - 1.0) * p).round() as usize;
         rtts_ns[idx] as f64 / 1000.0 // ns -> µs
     };
-    let mean_us =
-        rtts_ns.iter().sum::<u64>() as f64 / rtts_ns.len() as f64 / 1000.0;
+    let mean_us = rtts_ns.iter().sum::<u64>() as f64 / rtts_ns.len() as f64 / 1000.0;
     let median_us = pct(0.50);
     let p99_us = pct(0.99);
     let owl_us = median_us / 2.0; // one-way latency estimate
 
-    println!("mode={} samples={} lost={}", if encrypted { "encrypted" } else { "plain" }, rtts_ns.len(), lost);
+    println!(
+        "mode={} samples={} lost={}",
+        if encrypted { "encrypted" } else { "plain" },
+        rtts_ns.len(),
+        lost
+    );
     println!("METRIC rtt_median_us={median_us:.2}");
     println!("METRIC rtt_p99_us={p99_us:.2}");
     println!("METRIC rtt_mean_us={mean_us:.2}");

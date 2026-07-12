@@ -1,0 +1,99 @@
+name: 🐛 Bug Report
+description: Something isn't working as expected
+title: "bug: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! ShareClick involves **two machines**,
+        so please fill in details for both sides — it makes triage much faster.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug. What did you expect to happen instead?
+      placeholder: "When I move the cursor to the left edge, it doesn't cross over to the other machine..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Start ShareClick on both machines
+        2. Pair them
+        3. Move cursor to the edge
+        4. ...
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: ShareClick version
+      description: Run `shareclick --version` (must match on both machines)
+      placeholder: "0.5.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os-a
+    attributes:
+      label: Machine A — OS
+      options:
+        - Windows 11
+        - Windows 10
+        - macOS
+        - Linux (X11)
+        - Linux (Wayland)
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os-b
+    attributes:
+      label: Machine B — OS
+      options:
+        - Windows 11
+        - Windows 10
+        - macOS
+        - Linux (X11)
+        - Linux (Wayland)
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: network
+    attributes:
+      label: Network setup
+      options:
+        - Same Wi-Fi network
+        - Wired LAN (Ethernet)
+        - Mixed (one Wi-Fi, one Ethernet)
+        - VPN / VLAN / other
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        Run with `RUST_LOG=debug shareclick` and paste relevant output from **both machines** if possible.
+        This will be automatically formatted as code.
+      render: shell
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-flight checklist
+      options:
+        - label: I searched existing issues and this hasn't been reported yet
+          required: true
+        - label: Both machines run the same ShareClick version
+        - label: I checked the troubleshooting docs

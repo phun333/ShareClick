@@ -68,7 +68,11 @@ impl Handshake {
         // so both peers compute the same `info` regardless of role.
         let ours = self.public.to_bytes();
         let theirs = peer_public;
-        let (a, b) = if ours <= theirs { (ours, theirs) } else { (theirs, ours) };
+        let (a, b) = if ours <= theirs {
+            (ours, theirs)
+        } else {
+            (theirs, ours)
+        };
         let mut info = Vec::with_capacity(8 + 64);
         info.extend_from_slice(b"sc-v1-kd");
         info.extend_from_slice(&a);
@@ -141,15 +145,32 @@ impl Session {
     /// sequence number or a monotonic message counter).
     pub fn seal(&self, counter: u64, aad: &[u8], plaintext: &[u8]) -> Vec<u8> {
         self.send
-            .encrypt(&nonce(counter), Payload { msg: plaintext, aad })
+            .encrypt(
+                &nonce(counter),
+                Payload {
+                    msg: plaintext,
+                    aad,
+                },
+            )
             .expect("chacha20poly1305 encryption is infallible for valid input")
     }
 
     /// Decrypt a record produced by the peer at `counter`. Fails if the data was
     /// tampered with, the counter is wrong, or the PSK/handshake did not match.
-    pub fn open(&self, counter: u64, aad: &[u8], ciphertext: &[u8]) -> Result<Vec<u8>, CryptoError> {
+    pub fn open(
+        &self,
+        counter: u64,
+        aad: &[u8],
+        ciphertext: &[u8],
+    ) -> Result<Vec<u8>, CryptoError> {
         self.recv
-            .decrypt(&nonce(counter), Payload { msg: ciphertext, aad })
+            .decrypt(
+                &nonce(counter),
+                Payload {
+                    msg: ciphertext,
+                    aad,
+                },
+            )
             .map_err(|_| CryptoError::Decrypt)
     }
 }

@@ -82,8 +82,12 @@ fn install_macos(exe: &std::path::Path) -> anyhow::Result<()> {
     );
     std::fs::write(&path, plist)?;
     // Reload if already loaded, then load.
-    let _ = Command::new("launchctl").args(["unload", &path.to_string_lossy()]).status();
-    let status = Command::new("launchctl").args(["load", "-w", &path.to_string_lossy()]).status()?;
+    let _ = Command::new("launchctl")
+        .args(["unload", &path.to_string_lossy()])
+        .status();
+    let status = Command::new("launchctl")
+        .args(["load", "-w", &path.to_string_lossy()])
+        .status()?;
     if !status.success() {
         anyhow::bail!("launchctl load failed");
     }
@@ -96,7 +100,9 @@ fn install_macos(exe: &std::path::Path) -> anyhow::Result<()> {
 #[cfg(target_os = "macos")]
 fn uninstall_macos() -> anyhow::Result<()> {
     let path = plist_path()?;
-    let _ = Command::new("launchctl").args(["unload", "-w", &path.to_string_lossy()]).status();
+    let _ = Command::new("launchctl")
+        .args(["unload", "-w", &path.to_string_lossy()])
+        .status();
     if path.exists() {
         std::fs::remove_file(&path)?;
     }

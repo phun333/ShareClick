@@ -130,7 +130,11 @@ fn spawn_pair() {
 /// so it has its own event loop). Falls back to opening the config file.
 fn open_settings(path: &PathBuf) {
     if let Ok(exe) = std::env::current_exe() {
-        if std::process::Command::new(&exe).arg("settings").spawn().is_ok() {
+        if std::process::Command::new(&exe)
+            .arg("settings")
+            .spawn()
+            .is_ok()
+        {
             return;
         }
     }
@@ -143,17 +147,26 @@ fn open_settings(path: &PathBuf) {
 
 #[cfg(target_os = "macos")]
 fn open_path(path: &PathBuf) -> std::io::Result<()> {
-    std::process::Command::new("open").arg(path).spawn().map(|_| ())
+    std::process::Command::new("open")
+        .arg(path)
+        .spawn()
+        .map(|_| ())
 }
 
 #[cfg(target_os = "windows")]
 fn open_path(path: &PathBuf) -> std::io::Result<()> {
-    std::process::Command::new("explorer").arg(path).spawn().map(|_| ())
+    std::process::Command::new("explorer")
+        .arg(path)
+        .spawn()
+        .map(|_| ())
 }
 
 #[cfg(all(not(target_os = "macos"), not(target_os = "windows")))]
 fn open_path(path: &PathBuf) -> std::io::Result<()> {
-    std::process::Command::new("xdg-open").arg(path).spawn().map(|_| ())
+    std::process::Command::new("xdg-open")
+        .arg(path)
+        .spawn()
+        .map(|_| ())
 }
 
 /// The ShareClick brand icon (a blue cursor-click glyph) — pre-rendered to raw

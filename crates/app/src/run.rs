@@ -26,14 +26,38 @@ use shareclick_protocol::{BulkMsg, ClipboardData, Edge, InputEvent, InputMsg};
 fn release_all_modifiers() -> InputMsg {
     use shareclick_protocol::Key::{LAlt, LCtrl, LMeta, LShift, RAlt, RCtrl, RMeta, RShift};
     InputMsg::Events(vec![
-        InputEvent::Key { key: LCtrl, pressed: false },
-        InputEvent::Key { key: RCtrl, pressed: false },
-        InputEvent::Key { key: LAlt, pressed: false },
-        InputEvent::Key { key: RAlt, pressed: false },
-        InputEvent::Key { key: LShift, pressed: false },
-        InputEvent::Key { key: RShift, pressed: false },
-        InputEvent::Key { key: LMeta, pressed: false },
-        InputEvent::Key { key: RMeta, pressed: false },
+        InputEvent::Key {
+            key: LCtrl,
+            pressed: false,
+        },
+        InputEvent::Key {
+            key: RCtrl,
+            pressed: false,
+        },
+        InputEvent::Key {
+            key: LAlt,
+            pressed: false,
+        },
+        InputEvent::Key {
+            key: RAlt,
+            pressed: false,
+        },
+        InputEvent::Key {
+            key: LShift,
+            pressed: false,
+        },
+        InputEvent::Key {
+            key: RShift,
+            pressed: false,
+        },
+        InputEvent::Key {
+            key: LMeta,
+            pressed: false,
+        },
+        InputEvent::Key {
+            key: RMeta,
+            pressed: false,
+        },
     ])
 }
 
@@ -49,9 +73,15 @@ mod tests {
         assert_eq!(opposite(Edge::Bottom), Edge::Top);
         // Leave the server's RIGHT edge at y=432 → enter the client's LEFT edge
         // at y=432 on a 2560×1440 screen.
-        assert_eq!(entry_point(opposite(Edge::Right), 432, 2560, 1440), (2, 432));
+        assert_eq!(
+            entry_point(opposite(Edge::Right), 432, 2560, 1440),
+            (2, 432)
+        );
         // Leave BOTTOM at x=1440 → enter TOP at x=1440 on a 1920×1080 screen.
-        assert_eq!(entry_point(opposite(Edge::Bottom), 1440, 1920, 1080), (1440, 2));
+        assert_eq!(
+            entry_point(opposite(Edge::Bottom), 1440, 1920, 1080),
+            (1440, 2)
+        );
     }
 }
 
@@ -158,7 +188,9 @@ fn my_hello(cfg_name: &str, sh: &Shared, refresh: bool) -> BulkMsg {
 /// were running) into the live shared state, and tell the peer so it adopts.
 /// This is what makes "connect first, arrange after" work without restarts.
 fn reload_arrangement(cfg_name: &str, sh: &Shared) {
-    let Ok(cfg) = Config::load(&Config::default_path()) else { return };
+    let Ok(cfg) = Config::load(&Config::default_path()) else {
+        return;
+    };
     let fresh = build_shared(&cfg);
     *sh.border.lock().unwrap() = *fresh.border.lock().unwrap();
     *sh.arrangement.lock().unwrap() = *fresh.arrangement.lock().unwrap();
@@ -215,7 +247,8 @@ pub fn pair() -> anyhow::Result<()> {
     let my_prefix = format!("{me}.");
     loop {
         let peers = discovery::list(Duration::from_secs(2)).unwrap_or_default();
-        if let Some((fullname, addr)) = peers.into_iter().find(|(n, _)| !n.starts_with(&my_prefix)) {
+        if let Some((fullname, addr)) = peers.into_iter().find(|(n, _)| !n.starts_with(&my_prefix))
+        {
             let peer = fullname.split('.').next().unwrap_or("peer").to_string();
             // ALWAYS the deterministic name tiebreaker — never the config role.
             // (If both configs said "server", both would listen forever and the
@@ -264,7 +297,9 @@ fn record_peer_screen(name: &str, screen: (u32, u32)) {
 /// survives restarts even though it was only ever configured on the peer.
 fn record_peer_layout(peer: &str, my_edge: Edge, my_offset: i32) {
     let path = Config::default_path();
-    let Ok(mut cfg) = Config::load(&path) else { return };
+    let Ok(mut cfg) = Config::load(&path) else {
+        return;
+    };
     let me = cfg.name.clone();
     let set = |m: &mut crate::config::Machine, e: Edge, n: &str| {
         m.left = None;
@@ -294,7 +329,12 @@ fn record_peer_layout(peer: &str, my_edge: Edge, my_offset: i32) {
 /// Blocks on the reader loop; returns when the peer disconnects.
 /// `adopt` = always take the peer's arrangement (the dialer does; the listener
 /// only takes it when it has none of its own).
-fn serve_bulk(conn: BulkConn, hello: Option<BulkMsg>, sh: Shared, adopt: bool) -> anyhow::Result<()> {
+fn serve_bulk(
+    conn: BulkConn,
+    hello: Option<BulkMsg>,
+    sh: Shared,
+    adopt: bool,
+) -> anyhow::Result<()> {
     let last = clipboard::shared_last();
     let (out_tx, out_rx) = mpsc::channel::<BulkMsg>();
     let (in_tx, in_rx) = mpsc::channel::<ClipboardData>();
@@ -326,9 +366,11 @@ fn serve_bulk(conn: BulkConn, hello: Option<BulkMsg>, sh: Shared, adopt: bool) -
             Ok(BulkMsg::Clipboard(data)) => {
                 let _ = in_tx.send(data);
             }
-            Ok(msg @ (BulkMsg::FileBegin { .. }
-            | BulkMsg::FileChunk { .. }
-            | BulkMsg::FileEnd { .. })) => {
+            Ok(
+                msg @ (BulkMsg::FileBegin { .. }
+                | BulkMsg::FileChunk { .. }
+                | BulkMsg::FileEnd { .. }),
+            ) => {
                 if let Err(e) = receiver.handle(&msg) {
                     tracing::warn!(error = %e, "file receive failed");
                 }
@@ -337,7 +379,14 @@ fn serve_bulk(conn: BulkConn, hello: Option<BulkMsg>, sh: Shared, adopt: bool) -
             // Deskflow's DINF pattern) and optionally its monitor arrangement —
             // adopt the mirrored version so the layout is only ever configured
             // on ONE machine.
-            Ok(BulkMsg::Hello { name, screen, edge, offset, refresh, .. }) => {
+            Ok(BulkMsg::Hello {
+                name,
+                screen,
+                edge,
+                offset,
+                refresh,
+                ..
+            }) => {
                 tracing::info!(peer = %name, width = screen.0, height = screen.1, "peer reported its screen size (Hello)");
                 *sh.peer_screen.lock().unwrap() = screen;
                 record_peer_screen(&name, screen);
@@ -359,7 +408,11 @@ fn serve_bulk(conn: BulkConn, hello: Option<BulkMsg>, sh: Shared, adopt: bool) -
                             my_offset,
                         );
                         record_peer_layout(&name, my_edge, my_offset);
-                        tracing::info!(?my_edge, my_offset, "adopted the peer's monitor arrangement");
+                        tracing::info!(
+                            ?my_edge,
+                            my_offset,
+                            "adopted the peer's monitor arrangement"
+                        );
                     }
                 }
             }
@@ -383,7 +436,9 @@ fn run_peer_input(
     let mut injector = crate::emit::Injector::new()?;
     let mut prev_my_away = false;
     let mut idle_ticks: u32 = 0;
-    let mut cfg_mtime = std::fs::metadata(Config::default_path()).and_then(|m| m.modified()).ok();
+    let mut cfg_mtime = std::fs::metadata(Config::default_path())
+        .and_then(|m| m.modified())
+        .ok();
     let mut cfg_ticks: u32 = 0;
     let mut buf = [0u8; 2048];
     loop {
@@ -392,7 +447,9 @@ fn run_peer_input(
         cfg_ticks += 1;
         if cfg_ticks > 1500 {
             cfg_ticks = 0;
-            let m = std::fs::metadata(Config::default_path()).and_then(|m| m.modified()).ok();
+            let m = std::fs::metadata(Config::default_path())
+                .and_then(|m| m.modified())
+                .ok();
             if m != cfg_mtime {
                 cfg_mtime = m;
                 reload_arrangement(cfg_name, sh);
@@ -455,7 +512,13 @@ fn run_peer_input(
             if idle_ticks > 2000 {
                 idle_ticks = 0;
                 if let Some(p) = peer {
-                    let _ = udp.send_to(InputMsg::Ping { nonce: 0, echo_nanos: 0 }, p);
+                    let _ = udp.send_to(
+                        InputMsg::Ping {
+                            nonce: 0,
+                            echo_nanos: 0,
+                        },
+                        p,
+                    );
                 }
             }
         }
@@ -471,7 +534,9 @@ fn run_peer_input(
                     let ps = *sh.peer_screen.lock().unwrap();
                     let border = sh.border.lock().unwrap().unwrap_or(Edge::Right);
                     let cdim = perp_dim(border, ps.0, ps.1);
-                    InputMsg::PointerEnd { pos: Some(map_to_client(perp, offset, cdim)) }
+                    InputMsg::PointerEnd {
+                        pos: Some(map_to_client(perp, offset, cdim)),
+                    }
                 };
                 let _ = udp.send_to(msg, p);
             }
@@ -509,7 +574,11 @@ fn run_peer_input(
                         }
                     };
                     let _ = udp.send_to(
-                        InputMsg::PointerEnter { edge: opposite(edge_out), pos, span },
+                        InputMsg::PointerEnter {
+                            edge: opposite(edge_out),
+                            pos,
+                            span,
+                        },
                         p,
                     );
                 } else {
@@ -568,7 +637,10 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
     let listener = TcpListener::bind(bind_addr)?;
     loop {
         let (stream, _) = listener.accept()?;
-        let peer_ip = stream.peer_addr().map(|a| a.ip().to_string()).unwrap_or_default();
+        let peer_ip = stream
+            .peer_addr()
+            .map(|a| a.ip().to_string())
+            .unwrap_or_default();
         let (conn, input_sess) = match BulkConn::handshake(stream, &psk, Role::Responder) {
             Ok(v) => v,
             Err(e) => {
@@ -602,9 +674,16 @@ pub fn connect(server: Option<&str>) -> anyhow::Result<()> {
     let cfg = load_config()?;
     let psk = cfg.psk.clone().into_bytes();
     let with_port = |h: &str| -> String {
-        if h.contains(':') { h.to_string() } else { format!("{h}:{}", cfg.port) }
+        if h.contains(':') {
+            h.to_string()
+        } else {
+            format!("{h}:{}", cfg.port)
+        }
     };
-    let server_addr = match server.map(|s| s.to_string()).or_else(|| cfg.server_host.clone()) {
+    let server_addr = match server
+        .map(|s| s.to_string())
+        .or_else(|| cfg.server_host.clone())
+    {
         Some(host) => resolve(&with_port(&host))?,
         None => {
             tracing::info!("no server configured; searching via mDNS (3s)…");
@@ -653,7 +732,10 @@ pub fn connect(server: Option<&str>) -> anyhow::Result<()> {
     let channel = InputChannel::bind("0.0.0.0:0".parse().unwrap(), Some(server_addr))?
         .with_cipher(Arc::new(input_sess));
     channel.set_read_timeout(Some(Duration::from_millis(1)))?;
-    channel.send(InputMsg::Ping { nonce: 0, echo_nanos: 0 })?;
+    channel.send(InputMsg::Ping {
+        nonce: 0,
+        echo_nanos: 0,
+    })?;
 
     run_peer_input(&channel, &rx, &sh, &cfg.name, Some(server_addr))
 }

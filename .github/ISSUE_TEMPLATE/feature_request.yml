@@ -1,0 +1,36 @@
+name: ✨ Feature Request
+description: Suggest an idea or improvement
+title: "feat: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the problem or friction you're experiencing — not the solution yet.
+      placeholder: "I have three machines but ShareClick only pairs two..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How would you like this to work?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any workarounds you use today, or other approaches you've thought about.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-flight checklist
+      options:
+        - label: I searched existing issues and this hasn't been suggested yet
+          required: true
+        - label: I'd be willing to help implement this

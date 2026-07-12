@@ -80,6 +80,12 @@ security model, and contributor guides.
 Building from source? See the [development guide](https://shareclick.mintlify.app/develop/development).
 The Mintlify source lives in [`mintlify/`](./mintlify/README.md).
 
+## Contributing
+
+PRs welcome! Read [CONTRIBUTING.md](./CONTRIBUTING.md) first — we use
+[Conventional Commits](https://www.conventionalcommits.org/), and a one-time
+`./scripts/setup-hooks.sh` installs git hooks that keep CI green.
+
 ## License
 
 Dual-licensed under **MIT** or **Apache-2.0** — your choice.

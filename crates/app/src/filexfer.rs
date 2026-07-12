@@ -28,7 +28,11 @@ pub fn send_file(addr: SocketAddr, path: &Path) -> anyhow::Result<()> {
     let id = rand_id();
 
     let mut conn = BulkConn::new(TcpStream::connect(addr)?)?;
-    conn.send(&BulkMsg::FileBegin { id, name: name.clone(), size })?;
+    conn.send(&BulkMsg::FileBegin {
+        id,
+        name: name.clone(),
+        size,
+    })?;
 
     let mut file = File::open(path)?;
     let mut buf = vec![0u8; CHUNK];
@@ -141,16 +145,11 @@ mod tests {
             let (stream, _) = listener.accept().unwrap();
             let mut conn = BulkConn::new(stream).unwrap();
             let mut rx = FileReceiver::new(recv_dir_thread);
-            loop {
-                match conn.recv() {
-                    Ok(msg) => {
-                        let is_end = matches!(msg, BulkMsg::FileEnd { .. });
-                        rx.handle(&msg).unwrap();
-                        if is_end {
-                            break;
-                        }
-                    }
-                    Err(_) => break,
+            while let Ok(msg) = conn.recv() {
+                let is_end = matches!(msg, BulkMsg::FileEnd { .. });
+                rx.handle(&msg).unwrap();
+                if is_end {
+                    break;
                 }
             }
         });

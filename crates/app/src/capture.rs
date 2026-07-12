@@ -56,11 +56,20 @@ mod mac_cursor {
         fn CGAssociateMouseAndMouseCursorPosition(connected: bool) -> i32;
         fn CGSetLocalEventsSuppressionInterval(seconds: f64) -> i32;
         fn _CGSDefaultConnection() -> i32;
-        fn CGSSetConnectionProperty(cid: i32, target: i32, key: CFStringRef, value: CFTypeRef) -> i32;
+        fn CGSSetConnectionProperty(
+            cid: i32,
+            target: i32,
+            key: CFStringRef,
+            value: CFTypeRef,
+        ) -> i32;
     }
     #[link(name = "CoreFoundation", kind = "framework")]
     extern "C" {
-        fn CFStringCreateWithCString(alloc: *const c_void, s: *const c_char, enc: u32) -> CFStringRef;
+        fn CFStringCreateWithCString(
+            alloc: *const c_void,
+            s: *const c_char,
+            enc: u32,
+        ) -> CFStringRef;
         fn CFRelease(cf: CFTypeRef);
         static kCFBooleanTrue: CFTypeRef;
     }
@@ -91,7 +100,7 @@ mod mac_cursor {
         unsafe {
             let key = CFStringCreateWithCString(
                 std::ptr::null(),
-                b"SetsCursorInBackground\0".as_ptr() as *const c_char,
+                c"SetsCursorInBackground".as_ptr(),
                 0, // kCFStringEncodingMacRoman
             );
             if !key.is_null() {
@@ -236,7 +245,7 @@ pub fn run(
                         // The visitor leaves through the edge it entered, within
                         // the span its PointerEnter allowed — and only once armed.
                         let ok = control.host_armed.load(Ordering::Relaxed)
-                            && control.host_span.lock().unwrap().map_or(false, |(e, span)| {
+                            && control.host_span.lock().unwrap().is_some_and(|(e, span)| {
                                 e == edge && crate::edge::in_span(perp, span)
                             });
                         if ok {
@@ -295,17 +304,16 @@ pub fn run(
                     let mut lp = last_pos.lock().unwrap();
                     if is_active {
                         let _ = (x, y); // event position is stale; we query live
-                        // Deskflow technique: read the LIVE cursor position, warp
-                        // it back to centre every move, and forward the delta.
-                        // The warp only takes effect because we RETURN the
-                        // mouse-move event below (never suppress it on macOS).
+                                        // Deskflow technique: read the LIVE cursor position, warp
+                                        // it back to centre every move, and forward the delta.
+                                        // The warp only takes effect because we RETURN the
+                                        // mouse-move event below (never suppress it on macOS).
                         let (mx, my) = mac_cursor::current_pos();
                         let (px, py) = (*lp).unwrap_or((mx, my));
                         let dx = (mx - px).round() as i32;
                         let dy = (my - py).round() as i32;
                         // Skip no-motion and the post-warp "already at centre" event.
-                        if (dx == 0 && dy == 0)
-                            || ((mx - cx).abs() < 1.0 && (my - cy).abs() < 1.0)
+                        if (dx == 0 && dy == 0) || ((mx - cx).abs() < 1.0 && (my - cy).abs() < 1.0)
                         {
                             *lp = Some((mx, my));
                             None

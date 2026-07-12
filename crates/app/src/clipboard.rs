@@ -100,7 +100,11 @@ pub(crate) fn apply(inbox: Receiver<ClipboardData>, last: LastSeen) {
                     tracing::warn!(error = %e, "failed to set clipboard text");
                 }
             }
-            ClipboardData::Image { width, height, rgba } => {
+            ClipboardData::Image {
+                width,
+                height,
+                rgba,
+            } => {
                 *last.lock().unwrap() = Some(Fingerprint::Image(hash_image(width, height, &rgba)));
                 let img = ImageData {
                     width: width as usize,
