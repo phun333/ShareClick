@@ -125,9 +125,8 @@ mod mac_cursor {
 pub fn run(
     tx: Sender<InputEvent>,
     control: Arc<Control>,
-    edges: EdgeConfig,
+    arrangement: Arc<Mutex<(EdgeConfig, i32)>>,
     screen: (u32, u32),
-    offset: i32,
     peer_screen: Arc<Mutex<(u32, u32)>>,
 ) -> anyhow::Result<()> {
     #[cfg(not(target_os = "macos"))]
@@ -150,13 +149,22 @@ pub fn run(
     let combo_done = std::sync::atomic::AtomicBool::new(false);
 
     let toggle = move |control: &Control| {
-        let now = !control.active.load(Ordering::Relaxed);
-        if now {
-            // Manual toggle: no edge, so the client does NOT auto-return.
+        if control.my_away.load(Ordering::Relaxed) {
+            // Reclaim my pointer (the pump tells the peer with PointerEnd None).
+            control.my_away.store(false, Ordering::Relaxed);
+            *control.return_to.lock().unwrap() = None;
+            tracing::info!("pointer reclaimed (hotkey)");
+        } else if control.peer_away.load(Ordering::Relaxed) {
+            // Send the visiting pointer home (centre-ish).
+            control.peer_away.store(false, Ordering::Relaxed);
+            *control.send_peer_home.lock().unwrap() = Some(i32::MAX); // MAX = centre
+            tracing::info!("visiting pointer sent home (hotkey)");
+        } else {
+            // Push my pointer to the peer (no edge → enter at their centre).
             *control.entry.lock().unwrap() = None;
+            control.my_away.store(true, Ordering::Relaxed);
+            tracing::info!("pointer pushed to peer (hotkey)");
         }
-        control.active.store(now, Ordering::Relaxed);
-        tracing::info!(active = now, "control toggled (hotkey)");
     };
 
     let callback = move |event: Event| -> Option<Event> {
@@ -190,36 +198,52 @@ pub fn run(
             }
         }
 
-        // Automatic edge hand-off: while control is local, a cursor touching a
-        // bordered edge switches control to the client. Record where it left so
-        // the client can enter at the matching spot.
-        if !control.active.load(Ordering::Relaxed) {
+        // SYMMETRIC edge logic. The real cursor on this screen may be driven by
+        // local hands OR by the peer's injected input; either way, when it hits
+        // the shared border inside the overlap:
+        //  * a VISITING pointer (peer_away) crosses back home;
+        //  * otherwise MY pointer goes away to the peer.
+        if !control.my_away.load(Ordering::Relaxed) {
             if let EventType::MouseMove { x, y } = event.event_type {
                 let (xi, yi) = (x.round() as i32, y.round() as i32);
+                // Arrangement is LIVE: it may arrive/change via the peer's Hello.
+                let (edges, offset) = *arrangement.lock().unwrap();
                 if let Some(edge) = edges.hit(xi, yi) {
-                    // Position along the edge we left at (server-local).
+                    // Position along the edge (this-screen coordinates).
                     let perp = match edge {
                         Edge::Left | Edge::Right => yi,
                         Edge::Top | Edge::Bottom => xi,
                     };
-                    // Only cross where the two screens actually overlap, so the
-                    // edge feels like a real adjacent monitor (a wall elsewhere).
-                    let peer = *peer_screen.lock().unwrap();
-                    let (this_dim, other_dim) = match edge {
-                        Edge::Left | Edge::Right => (screen.1 as i32, peer.1 as i32),
-                        Edge::Top | Edge::Bottom => (screen.0 as i32, peer.0 as i32),
-                    };
-                    let span = crate::edge::overlap_span(this_dim, offset, other_dim);
-                    if crate::edge::in_span(perp, span) {
-                        *control.entry.lock().unwrap() = Some((edge, perp));
-                        control.active.store(true, Ordering::Relaxed);
-                        tracing::info!(?edge, perp, "cursor crossed edge; control handed to client");
+                    if control.peer_away.load(Ordering::Relaxed) {
+                        // The visitor leaves through the edge it entered, within
+                        // the span its PointerEnter allowed.
+                        let ok = control.host_span.lock().unwrap().map_or(false, |(e, span)| {
+                            e == edge && crate::edge::in_span(perp, span)
+                        });
+                        if ok {
+                            control.peer_away.store(false, Ordering::Relaxed);
+                            *control.send_peer_home.lock().unwrap() = Some(perp);
+                            tracing::info!(?edge, perp, "visiting pointer crossed home");
+                        }
+                    } else {
+                        // My pointer leaves — only where the two screens overlap.
+                        let peer = *peer_screen.lock().unwrap();
+                        let (this_dim, other_dim) = match edge {
+                            Edge::Left | Edge::Right => (screen.1 as i32, peer.1 as i32),
+                            Edge::Top | Edge::Bottom => (screen.0 as i32, peer.0 as i32),
+                        };
+                        let span = crate::edge::overlap_span(this_dim, offset, other_dim);
+                        if crate::edge::in_span(perp, span) {
+                            *control.entry.lock().unwrap() = Some((edge, perp));
+                            control.my_away.store(true, Ordering::Relaxed);
+                            tracing::info!(?edge, perp, "my pointer crossed to the peer");
+                        }
                     }
                 }
             }
         }
 
-        let is_active = control.active.load(Ordering::Relaxed);
+        let is_active = control.my_away.load(Ordering::Relaxed);
 
         // macOS: on control changes, hide/show the local cursor and recentre it.
         #[cfg(target_os = "macos")]

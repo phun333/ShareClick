@@ -157,6 +157,7 @@ impl Config {
     }
 
     /// The neighbour of `machine` across `edge`, if any.
+    #[allow(dead_code)]
     pub fn neighbor(&self, machine: &str, edge: Edge) -> Option<&str> {
         let m = self.machine(machine)?;
         match edge {

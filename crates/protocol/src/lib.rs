@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 pub mod crypto;
 
 /// Protocol version. Bump on breaking wire changes.
-pub const PROTOCOL_VERSION: u16 = 3;
+pub const PROTOCOL_VERSION: u16 = 4;
 
 /// Screen edge a cursor can cross to hand control to a neighbour.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -81,22 +81,23 @@ pub enum InputMsg {
     /// packet count at high polling rates and avoids the classic "jumpiness"
     /// when mouse rate exceeds display refresh).
     Events(Vec<InputEvent>),
-    /// Control handed to this client. `pos` is the client-local perpendicular
-    /// pixel (vertical for left/right edges, horizontal for top/bottom) where
-    /// the cursor should appear — the server already applied the arrangement
-    /// offset, so the client just warps there. `span` is the inclusive range
-    /// along the client's border edge where it may cross back (the overlap with
-    /// the server's screen); outside it the edge is a wall, so the two machines
-    /// behave like real adjacent monitors.
-    Enter {
+    /// SYMMETRIC: the sender's pointer arrives on YOUR screen through `edge`
+    /// (already translated to your frame). `pos` is the perpendicular pixel in
+    /// YOUR coordinates (the sender applied the arrangement offset). `span` is
+    /// the inclusive range along that edge where the pointer may cross back
+    /// (the overlap of the two screens); outside it the edge is a wall. From
+    /// now on the sender forwards its physical input to you.
+    PointerEnter {
         edge: Edge,
         pos: i32,
         span: (i32, i32),
     },
-    /// Control returns to the server. `pos` is the *client-local* perpendicular
-    /// pixel where the cursor crossed back; the server maps it through the
-    /// offset to place its own cursor at the matching spot.
-    Leave { pos: i32 },
+    /// SYMMETRIC: the away-state ends. If your pointer was on the sender's
+    /// screen, it comes home — `pos` is the perpendicular pixel (in YOUR
+    /// coordinates) where it re-appears, or `None` for "reclaimed by hotkey,
+    /// keep your cursor where it is". If instead the sender's pointer was on
+    /// your screen, it left (clear the visiting state).
+    PointerEnd { pos: Option<i32> },
     /// Latency probe. `echo_nanos` mirrors the sender's monotonic clock.
     Ping { nonce: u64, echo_nanos: u64 },
     /// Reply to a [`InputMsg::Ping`].
@@ -113,11 +114,18 @@ pub struct InputPacket {
 /// Messages carried on the **bulk** (reliable) channel.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum BulkMsg {
-    /// Handshake: identify a peer and negotiate capabilities.
+    /// Handshake: identify a peer and negotiate capabilities. `edge` + `offset`
+    /// describe the sender's monitor arrangement from ITS OWN perspective
+    /// (where the receiver's screen sits next to the sender's, and the
+    /// receiver's start along that edge relative to the sender's). A peer with
+    /// no arrangement of its own adopts the mirrored version, so you only ever
+    /// configure the layout on ONE machine.
     Hello {
         version: u16,
         name: String,
         screen: (u32, u32),
+        edge: Option<Edge>,
+        offset: i32,
     },
     /// Handshake acknowledgement.
     Welcome { version: u16, name: String },

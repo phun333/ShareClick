@@ -334,7 +334,7 @@ impl eframe::App for SettingsApp {
                 ui.text_edit_singleline(&mut self.this_name);
                 ui.end_row();
                 ui.label("This machine runs as");
-                egui::ComboBox::from_id_source("role")
+                egui::ComboBox::from_id_salt("role")
                     .selected_text(if self.role == "client" {
                         "Client (controlled)"
                     } else {

@@ -7,7 +7,6 @@ mod bench;
 mod bulk;
 mod config;
 mod control;
-mod cursor;
 mod edge;
 mod filexfer;
 mod transport;

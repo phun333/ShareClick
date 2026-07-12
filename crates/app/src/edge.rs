@@ -86,8 +86,8 @@ pub fn map_to_client(server_perp: i32, offset: i32, client_dim: u32) -> i32 {
     (server_perp - offset).clamp(0, client_dim as i32 - 1)
 }
 
-/// Inverse of [`map_to_client`]: map the client's local exit position back to
-/// the server's local entry position.
+/// Inverse of [`map_to_client`] (kept for tests/documentation of the mapping).
+#[allow(dead_code)]
 pub fn map_to_server(client_perp: i32, offset: i32, server_dim: u32) -> i32 {
     (client_perp + offset).clamp(0, server_dim as i32 - 1)
 }
