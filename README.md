@@ -88,4 +88,4 @@ PRs welcome! Read [CONTRIBUTING.md](./CONTRIBUTING.md) first — we use
 
 ## License
 
-Dual-licensed under **MIT** or **Apache-2.0** — your choice.
+Dual-licensed under [**MIT**](./LICENSE-MIT) or [**Apache-2.0**](./LICENSE-APACHE) — your choice.
