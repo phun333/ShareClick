@@ -1,0 +1,44 @@
+---
+title: "ShareClick vs Mouse Without Borders"
+description: "A free, open-source alternative to Mouse Without Borders that also works on Mac. Share mouse, keyboard, clipboard and files between Mac and Windows. Encrypted."
+icon: "scale-balanced"
+---
+
+Mouse Without Borders is a great free tool from Microsoft — but it is
+**Windows-only**. If you need to share one keyboard and mouse between a **Mac and
+a Windows PC**, ShareClick does it: open source, encrypted by default, with
+clipboard and file sharing built in.
+
+| Feature | ShareClick | Mouse Without Borders |
+| --- | --- | --- |
+| Price | Free & open source | Free (Microsoft Garage) |
+| Works on Mac | **Yes** | No (Windows only) |
+| Works on Windows | Yes | Yes |
+| Open source | **Yes (MIT/Apache)** | No |
+| Clipboard (text + images) | Yes | Yes |
+| File transfer | Yes | Yes |
+| Encryption | **On by default (X25519 + ChaCha20)** | Limited |
+| Auto discovery | **mDNS (no IPs)** | Manual (security code) |
+| Input transport | **UDP, ~6 µs** | TCP |
+
+## Which should you pick?
+
+- **Choose ShareClick** if either machine is a **Mac** — Mouse Without Borders
+  can't help there. You also get open source, encryption on by default, and
+  zero-config discovery.
+- **Choose Mouse Without Borders** if **all** your machines run Windows and you're
+  happy with a closed-source Microsoft tool.
+
+Mouse Without Borders is polished and genuinely free, but it never left Windows.
+ShareClick brings the same "one keyboard & mouse across machines" idea to
+**Mac↔Windows**, with a UDP input path (~6 µs transport overhead), encryption on
+every channel, and mDNS discovery so you never type an IP.
+
+<CardGroup cols={2}>
+  <Card title="Download ShareClick (free)" icon="download" href="/download">
+    macOS `.dmg` or Windows installer.
+  </Card>
+  <Card title="Setup guide" icon="rocket" href="/quickstart">
+    Share your mouse & keyboard in 60 seconds.
+  </Card>
+</CardGroup>

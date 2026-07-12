@@ -1,0 +1,106 @@
+---
+title: "Security & cryptography"
+description: "ShareClick's WireGuard/Noise-inspired crypto: ephemeral X25519, a pre-shared passphrase, HKDF-SHA256 and ChaCha20-Poly1305 on every channel."
+icon: "shield-halved"
+---
+
+Implementation lives in `crates/protocol/src/crypto.rs`. The design is
+WireGuard/Noise-inspired and deliberately conservative — "very high quality,
+boring crypto."
+
+## Primitives
+
+| Purpose | Primitive | Crate |
+|---|---|---|
+| Key agreement | X25519 ECDH (ephemeral) | `x25519-dalek` |
+| Authentication | Pre-shared key mixed into the KDF salt | — |
+| Key derivation | HKDF-SHA256 | `hkdf`, `sha2` |
+| Record encryption | ChaCha20-Poly1305 (AEAD) | `chacha20poly1305` |
+
+## Handshake (per session)
+
+<Steps>
+  <Step title="Fresh ephemeral keys">
+    Each peer generates a fresh ephemeral X25519 keypair.
+  </Step>
+  <Step title="Exchange public keys">
+    Over the TCP bulk channel they exchange 32-byte public keys in the clear
+    (safe for ECDH).
+  </Step>
+  <Step title="Compute the shared secret">
+    Both compute `DH(our_sk, their_pk)`.
+  </Step>
+  <Step title="Derive key material">
+    `HKDF-SHA256` derives keys with `salt = PSK` (the passphrase → authentication),
+    `ikm = shared_secret`, and `info = "sc-v1-kd" || sorted(pubkey_a, pubkey_b)`
+    (binds the transcript).
+  </Step>
+  <Step title="Split into four keys">
+    The 128-byte output splits into input-i2r, input-r2i, bulk-i2r, bulk-r2i
+    (i2r = initiator→responder). Each channel + direction gets its own key, so
+    counters/nonces can never collide.
+  </Step>
+</Steps>
+
+## Why this is secure
+
+<AccordionGroup>
+  <Accordion title="Confidentiality + integrity" icon="lock">
+    ChaCha20-Poly1305 is an AEAD; any tampering fails the Poly1305 tag and the
+    packet is rejected.
+  </Accordion>
+  <Accordion title="Authentication / anti-MITM" icon="user-shield">
+    Without the correct PSK, the two peers derive *different* keys and every
+    `open()` fails. An attacker who intercepts and replaces the ephemeral keys
+    still can't derive the session keys without the PSK. This is why **mDNS
+    discovery is safe** — discovery only finds a candidate address; the PSK still
+    proves identity.
+  </Accordion>
+  <Accordion title="Forward secrecy" icon="clock-rotate-left">
+    Keys are ephemeral per session, so compromising one session's keys doesn't
+    expose past or future sessions.
+  </Accordion>
+  <Accordion title="Nonce safety" icon="hashtag">
+    A unique key per direction + a monotonic counter (UDP: the packet `seq`; TCP:
+    an implicit ordered counter) guarantees no `(key, nonce)` pair is ever
+    reused — the cardinal AEAD rule.
+  </Accordion>
+</AccordionGroup>
+
+## Threat model
+
+<Tabs>
+  <Tab title="In scope (defended)">
+    - Passive eavesdropper on the LAN/Wi-Fi.
+    - Active attacker who forges/replays/tampers packets (rejected by AEAD +
+      counter).
+    - Imposter advertising the same mDNS service (rejected without the PSK).
+  </Tab>
+  <Tab title="Out of scope">
+    - **A compromised endpoint** (malware on either machine) — ShareClick injects
+      input by design, so an attacker with code execution already wins.
+    - **DoS by flooding UDP** — mitigated only by being LAN-local.
+    - **Replay within a session** — the counter prevents accepting an *old*
+      counter, but there's no sliding-window anti-replay cache yet for
+      out-of-order UDP. Practically low-risk on a LAN.
+    - **PSK strength** is the user's responsibility (`config.rs` enforces ≥ 8
+      chars; pick a long random passphrase).
+  </Tab>
+</Tabs>
+
+## Operational guidance
+
+<Warning>
+  Use a **long, random PSK**, identical on both machines, and never commit it.
+  The config file holds the PSK in **plaintext** at
+  `~/Library/Application Support/shareclick/config.toml` (macOS) or
+  `%APPDATA%\shareclick\config.toml` (Windows). Protect it with normal file
+  permissions.
+</Warning>
+
+## Tests
+
+`crypto.rs` unit tests assert: round-trip both directions; wrong PSK fails;
+tampered ciphertext fails; wrong counter fails; tag-only overhead; and that the
+input and bulk channels use independent keys (a ciphertext from one cannot be
+opened by the other).

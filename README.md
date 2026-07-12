@@ -59,6 +59,10 @@ Full docs live in [**docs/**](./docs/README.md): architecture, wire protocol,
 security model, development guide, release process, decision log, and build
 history. Changelog: [CHANGELOG.md](./CHANGELOG.md).
 
+A polished, AI/LLM-friendly documentation site (built with **Mintlify**) lives in
+[**mintlify/**](./mintlify/README.md) — run `npx mint@latest dev` in that folder
+to preview it locally.
+
 ---
 
 ## Why another one?

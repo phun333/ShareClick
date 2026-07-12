@@ -1,0 +1,142 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "ShareClick",
+  "description": "A low-latency, open-source software KVM. Share one keyboard, mouse, clipboard and files between macOS and Windows over your LAN, end-to-end encrypted.",
+  "colors": {
+    "primary": "#2563eb",
+    "light": "#60a5fa",
+    "dark": "#1d4ed8"
+  },
+  "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo/logo-light.svg",
+    "dark": "/logo/logo-dark.svg",
+    "href": "https://phun333.github.io/ShareClick/"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "download",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "usage",
+              "configuration",
+              "file-transfer",
+              "troubleshooting"
+            ]
+          },
+          {
+            "group": "How It Works",
+            "pages": [
+              "concepts/architecture",
+              "concepts/protocol",
+              "concepts/security",
+              "concepts/latency"
+            ]
+          },
+          {
+            "group": "Contribute",
+            "pages": [
+              "develop/development",
+              "develop/decisions",
+              "develop/releasing"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Compare",
+        "groups": [
+          {
+            "group": "vs. Alternatives",
+            "pages": [
+              "compare/overview",
+              "compare/vs-synergy",
+              "compare/vs-sharemouse",
+              "compare/vs-barrier",
+              "compare/vs-input-leap",
+              "compare/vs-mouse-without-borders",
+              "compare/vs-universal-control"
+            ]
+          }
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "GitHub",
+          "href": "https://github.com/phun333/ShareClick",
+          "icon": "github"
+        },
+        {
+          "anchor": "Download",
+          "href": "/download",
+          "icon": "download"
+        },
+        {
+          "anchor": "Website",
+          "href": "https://phun333.github.io/ShareClick/",
+          "icon": "globe"
+        }
+      ]
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/phun333/ShareClick"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Download",
+      "href": "/download"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/phun333/ShareClick"
+    },
+    "links": [
+      {
+        "header": "Product",
+        "items": [
+          { "label": "Download", "href": "/download" },
+          { "label": "Website", "href": "https://phun333.github.io/ShareClick/" },
+          { "label": "What is a software KVM?", "href": "https://phun333.github.io/ShareClick/what-is-a-software-kvm.html" }
+        ]
+      },
+      {
+        "header": "Resources",
+        "items": [
+          { "label": "GitHub", "href": "https://github.com/phun333/ShareClick" },
+          { "label": "Issues", "href": "https://github.com/phun333/ShareClick/issues" },
+          { "label": "Changelog", "href": "https://github.com/phun333/ShareClick/blob/main/CHANGELOG.md" }
+        ]
+      }
+    ]
+  },
+  "seo": {
+    "metatags": {
+      "og:site_name": "ShareClick Docs"
+    },
+    "indexing": "all"
+  },
+  "contextual": {
+    "options": ["copy", "view", "chatgpt", "claude"]
+  }
+}

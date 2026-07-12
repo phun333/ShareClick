@@ -1,0 +1,68 @@
+---
+title: "File transfer"
+description: "Send files between your machines over ShareClick's reliable, chunked, resumable-by-offset transfer channel."
+icon: "file-arrow-up"
+---
+
+Once two machines are connected, the clipboard syncs automatically and you can
+send files across the **bulk channel** (TCP) — the reliable side of ShareClick's
+[dual-channel design](/concepts/architecture).
+
+## Send a file
+
+```bash
+shareclick send-file 192.168.1.20:24800 ./report.pdf
+```
+
+The file lands in `./received/` on the peer. Use the **other** machine's
+`IP:port`.
+
+<Steps>
+  <Step title="Connect both machines">
+    Start the server and client as usual (see [Usage](/usage)). The clipboard
+    starts syncing immediately.
+  </Step>
+  <Step title="Run send-file">
+    From either machine, run `send-file` pointing at the peer's `IP:port` and the
+    path to the file.
+  </Step>
+  <Step title="Find it in ./received">
+    On the receiving machine, look in the `received/` directory next to where
+    ShareClick runs.
+  </Step>
+</Steps>
+
+## How it works
+
+A file transfer is three kinds of message on the bulk channel:
+
+1. **`FileBegin`** — announces the file id, name, and size.
+2. **`FileChunk`** — many 64 KiB chunks, each written at its `offset`.
+3. **`FileEnd`** — signals completion.
+
+Because every chunk carries its byte `offset`, transfers are robust and
+resumable-in-principle. See the [wire protocol](/concepts/protocol#bulk-channel)
+for the exact message shapes.
+
+<Note>
+  The receiver **sanitizes the filename** (strips path components) to prevent
+  path-traversal attacks, and writes only into `./received/`. Max frame size is
+  64 MiB to guard against a hostile peer forcing a huge allocation.
+</Note>
+
+## Clipboard sync
+
+Clipboard sharing needs no command — it's on whenever two machines are
+connected. Both **text** and **images** (raw RGBA) sync in both directions over
+the same reliable channel.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Wire protocol" icon="network-wired" href="/concepts/protocol">
+    The exact bulk-channel message formats.
+  </Card>
+  <Card title="Security" icon="shield-halved" href="/concepts/security">
+    How file and clipboard data stay encrypted.
+  </Card>
+</CardGroup>

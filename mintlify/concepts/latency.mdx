@@ -1,0 +1,78 @@
+---
+title: "Latency"
+description: "Where the microseconds actually go — ShareClick's ~6 µs one-way transport overhead and the design decisions that keep input lag minimal."
+icon: "gauge-high"
+---
+
+Lowest input lag is ShareClick's headline feature. Every design choice defers to
+it, and we keep a benchmark in the repo so regressions get caught immediately.
+
+## Measured overhead
+
+Measured on loopback with `shareclick bench --encrypted`:
+
+<CardGroup cols={2}>
+  <Card title="~6.5 µs one-way" icon="bolt">
+    Transport overhead: serialize + seal + socket + open + deserialize.
+  </Card>
+  <Card title="~20 ns" icon="lock">
+    Extra cost of encryption (ChaCha20-Poly1305 on tiny packets).
+  </Card>
+</CardGroup>
+
+```bash
+$ shareclick bench --count 20000
+METRIC rtt_median_us=~12     # loopback round-trip
+METRIC oneway_us=~6          # one-way transport overhead
+```
+
+<Note>
+  **~6 µs one-way** means our code is not the bottleneck. On a real LAN,
+  end-to-end input lag is dominated by the network RTT (~0.2–1 ms) and OS event
+  injection — not ShareClick.
+</Note>
+
+## Why it's this fast
+
+<AccordionGroup>
+  <Accordion title="UDP for input, TCP for bulk" icon="network-wired">
+    A dropped mouse move is irrelevant a millisecond later, so UDP avoids
+    head-of-line blocking. The fast path never waits on retransmits of the slow
+    path. See [Decision #1](/develop/decisions).
+  </Accordion>
+  <Accordion title="Dedicated blocking socket, not async" icon="microchip">
+    An async runtime adds scheduler jitter on the hot path. A dedicated thread
+    with a blocking socket has the most predictable latency — `transport.rs` is
+    intentionally synchronous. See [Decision #3](/develop/decisions).
+  </Accordion>
+  <Accordion title="Per-tick event coalescing" icon="layer-group">
+    High mouse polling rates (1000+ Hz) would flood the network and cause
+    "jumpiness" when polling exceeds display refresh. Coalescing a tick's events
+    into one packet fixes both. See [Decision #6](/develop/decisions).
+  </Accordion>
+  <Accordion title="Allocation-light, lock-free hot path" icon="feather">
+    `transport.rs` uses immutable cipher state and no per-packet locks or
+    allocations, precisely to avoid scheduler jitter.
+  </Accordion>
+</AccordionGroup>
+
+## Run the benchmark yourself
+
+No OS permissions needed — the benchmark runs entirely on loopback:
+
+```bash
+cargo run --release -- bench --count 20000            # plaintext
+cargo run --release -- bench --count 20000 --encrypted
+```
+
+<Tip>
+  Latency is a **tracked metric**. Before/after any change on the input path, run
+  `bench --encrypted` and confirm no regression. The history is recorded in
+  `autoresearch.jsonl`.
+</Tip>
+
+## Next
+
+<Card title="Architecture" icon="diagram-project" href="/concepts/architecture" horizontal>
+  The full dual-channel design behind these numbers.
+</Card>

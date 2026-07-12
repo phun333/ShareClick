@@ -1,0 +1,114 @@
+---
+title: "Configuration"
+description: "Every field in config.toml — settings and the monitor-manager layout that ShareClick uses to route your cursor between machines."
+icon: "gear"
+---
+
+ShareClick reads a single `config.toml`. The settings window writes it for you,
+but you can edit it by hand. Create one with:
+
+```bash
+shareclick init-config
+```
+
+## Where it lives
+
+<CodeGroup>
+```text macOS
+~/Library/Application Support/shareclick/config.toml
+```
+
+```text Windows
+%APPDATA%\shareclick\config.toml
+```
+</CodeGroup>
+
+## Top-level fields
+
+| Field | Meaning |
+|---|---|
+| `name` | This machine's name. Must match one entry under `[[machines]]`. |
+| `psk` | Shared passphrase (≥ 8 chars). Identical on both machines. Authenticates + encrypts. |
+| `port` | Network port (default `24800`). Same on both. |
+| `auto_edge_switch` | Hand control over when the cursor hits a bordered edge. |
+| `server_host` | (Client only) the server's IP, e.g. `192.168.1.20`. Omit to auto-discover. |
+
+<Warning>
+  The `psk` is stored in **plaintext** in the config file. Pick a long, random
+  passphrase, keep it identical on both machines, and never commit it. Protect
+  the file with normal OS file permissions. See [Security](/concepts/security).
+</Warning>
+
+## The monitor manager (`[[machines]]`)
+
+The `[[machines]]` array is the layout: each machine lists which peer sits on
+each edge (`left` / `right` / `top` / `bottom`). When `auto_edge_switch` is on,
+pushing the cursor into a bordered edge hands control to that neighbour.
+
+```toml
+[[machines]]
+name = "mac"
+right = "windows"          # windows is to the right of mac
+
+[[machines]]
+name = "windows"
+left  = "mac"              # mac is to the left of windows
+```
+
+<Tip>
+  Screen sizes are **auto-detected** — this machine's from the OS, and the
+  other's is reported automatically the first time it connects. Add
+  `screen = [w, h]` under a machine **only** to override a wrong auto-detection.
+</Tip>
+
+## Full example
+
+<CodeGroup>
+```toml Server
+name = "mac"
+psk  = "pick-a-long-secret"
+port = 24800
+auto_edge_switch = true
+
+[[machines]]
+name = "mac"
+right = "windows"
+
+[[machines]]
+name = "windows"
+left  = "mac"
+```
+
+```toml Client
+name = "windows"
+psk  = "pick-a-long-secret"
+port = 24800
+auto_edge_switch = true
+server_host = "192.168.1.20"
+
+[[machines]]
+name = "mac"
+right = "windows"
+
+[[machines]]
+name = "windows"
+left  = "mac"
+```
+</CodeGroup>
+
+<Note>
+  New config fields ship with `#[serde(default)]`, so older config files keep
+  loading after an upgrade. See the [Releasing](/develop/releasing) versioning
+  policy.
+</Note>
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="File transfer" icon="file-arrow-up" href="/file-transfer">
+    Send files between machines.
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/troubleshooting">
+    Layout not switching? Auth failing? Fixes here.
+  </Card>
+</CardGroup>

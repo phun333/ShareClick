@@ -1,0 +1,130 @@
+---
+title: "Installation"
+description: "Install ShareClick on macOS and Windows, and get past the one-time unsigned-app warning."
+icon: "download"
+---
+
+ShareClick is **free and open source**. The builds are **not signed with a paid
+Apple/Microsoft certificate**, so your OS shows a one-time warning the first time
+you launch it. The app is completely safe — it's the same code you can read in
+[the repo](https://github.com/phun333/ShareClick) — and getting past the warning
+takes a few seconds.
+
+## Package managers (fastest)
+
+<CodeGroup>
+```bash macOS (Homebrew)
+brew install --cask phun333/tap/shareclick
+# if macOS still blocks it:
+xattr -cr "/Applications/ShareClick.app"
+```
+
+```powershell Windows (Scoop)
+scoop install https://raw.githubusercontent.com/phun333/ShareClick/main/packaging/scoop/shareclick.json
+```
+</CodeGroup>
+
+Prefer manual installers? Grab them from the [**Download page**](/download).
+
+## macOS
+
+<Steps>
+  <Step title="Install">
+    Download `ShareClick-*.dmg` from the [Download page](/download), open it, and
+    drag **ShareClick** onto the **Applications** folder.
+  </Step>
+  <Step title="Get past Gatekeeper">
+    <Tabs>
+      <Tab title="Right-click Open">
+        1. Open **Applications** (Finder → Go → Applications).
+        2. **Right-click** (or Control-click) **ShareClick** → **Open**.
+        3. Click **Open** again in the dialog.
+      </Tab>
+      <Tab title='"App is damaged" fix'>
+        On macOS Sequoia and newer, the right-click option may be missing or you
+        may see *"the app is damaged"*. Remove the quarantine flag from Terminal:
+        ```bash
+        xattr -cr /Applications/ShareClick.app
+        ```
+        Then open the app normally. You won't see the warning again.
+      </Tab>
+      <Tab title="System Settings">
+        1. Double-click ShareClick — it gets blocked.
+        2. Open **System Settings → Privacy & Security**.
+        3. In the **Security** section, click **Open Anyway** next to
+           *"ShareClick was blocked…"* and confirm with Touch ID / password.
+      </Tab>
+    </Tabs>
+  </Step>
+  <Step title="Grant input permissions (required)">
+    ShareClick moves your mouse & keyboard, so macOS requires two permissions.
+    In **System Settings → Privacy & Security**:
+
+    - **Accessibility** → enable **ShareClick**
+    - **Input Monitoring** → enable **ShareClick**
+
+    <Warning>
+      Quit and relaunch ShareClick after granting the permissions, or input
+      capture/injection won't work.
+    </Warning>
+  </Step>
+</Steps>
+
+## Windows
+
+<Steps>
+  <Step title="Install">
+    Download `ShareClick-Setup-*.exe` from the [Download page](/download) and run
+    it. **No administrator rights needed** — it installs just for you.
+  </Step>
+  <Step title="Get past SmartScreen">
+    If Windows shows **"Windows protected your PC"**: click **More info** →
+    **Run anyway**. This only appears once.
+  </Step>
+  <Step title="Allow through the firewall">
+    On first `serve` / `connect`, **Windows Defender Firewall** asks to allow
+    ShareClick. Tick **Private networks** and click **Allow access** (port
+    24800).
+  </Step>
+</Steps>
+
+## Why the warnings? Is it safe?
+
+<AccordionGroup>
+  <Accordion title="Why does my OS warn me?" icon="circle-question">
+    Apple and Microsoft charge for the certificates that make these warnings go
+    away (Apple: $99/yr + notarization; Windows: ~$200+/yr EV certificate).
+    ShareClick doesn't pay for them yet, so the OS can't verify a paid developer
+    identity — hence the one-time warning that every small open-source app gets.
+  </Accordion>
+  <Accordion title="Is it actually safe?" icon="shield-check">
+    Yes. Every line is in the public repo, and every release is built by public
+    CI (`.github/workflows/release.yml`), so you can verify exactly what you're
+    running. The steps above are the standard, safe way to run trusted unsigned
+    open-source software.
+  </Accordion>
+  <Accordion title="Can I build it myself instead?" icon="hammer">
+    Absolutely — compile from source for zero warnings and full control. See the
+    [Development guide](/develop/development).
+  </Accordion>
+</AccordionGroup>
+
+## Uninstall
+
+<CodeGroup>
+```text macOS
+Drag ShareClick.app from Applications to the Trash.
+Config lives at ~/Library/Application Support/shareclick/
+```
+
+```text Windows
+Settings → Apps → ShareClick → Uninstall.
+Config lives at %APPDATA%\shareclick\
+```
+</CodeGroup>
+
+## Next
+
+<Card title="Quickstart" icon="rocket" href="/quickstart" horizontal>
+  Now share your mouse & keyboard in 60 seconds.
+</Card>

@@ -1,0 +1,82 @@
+---
+title: "ShareClick"
+description: "A low-latency, open-source software KVM — move one keyboard, mouse, clipboard and files between macOS and Windows over your LAN, end-to-end encrypted."
+mode: "wide"
+---
+
+**ShareClick** lets you move a single keyboard & mouse — plus the clipboard and
+files — between your **macOS** and **Windows** machines over the LAN, with the
+lowest input lag we can squeeze out.
+
+Think ShareMouse / Synergy / Deskflow, but **free, open, and built for latency
+first**. It's a free alternative to Synergy, ShareMouse, Barrier and Input Leap,
+the Mac-capable answer to Mouse Without Borders, and effectively Universal
+Control for Windows.
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart" horizontal>
+    Share your mouse & keyboard in about 60 seconds.
+  </Card>
+  <Card title="Download" icon="download" href="/download" horizontal>
+    Get the latest macOS `.dmg` or Windows installer.
+  </Card>
+  <Card title="How it works" icon="diagram-project" href="/concepts/architecture" horizontal>
+    The UDP + TCP dual-channel design behind the low latency.
+  </Card>
+  <Card title="Compare" icon="scale-balanced" href="/compare/overview" horizontal>
+    ShareClick vs. Synergy, ShareMouse, Barrier & more.
+  </Card>
+</CardGroup>
+
+## What it does
+
+<CardGroup cols={2}>
+  <Card title="One keyboard & mouse" icon="keyboard">
+    Push your cursor across the screen edge to control the other machine — no
+    hotkey needed.
+  </Card>
+  <Card title="Shared clipboard" icon="clipboard">
+    Copy on one machine, paste on the other. Text and images sync automatically.
+  </Card>
+  <Card title="Drag-and-drop files" icon="file-arrow-up">
+    Send files between machines over a reliable, chunked transfer channel.
+  </Card>
+  <Card title="End-to-end encrypted" icon="lock">
+    X25519 + a shared passphrase + ChaCha20-Poly1305 on every channel. LAN-only,
+    no cloud, no accounts.
+  </Card>
+</CardGroup>
+
+## Why another KVM?
+
+We surveyed everything in this space before writing a line of code and took the
+best of each: **Lan Mouse's** UDP input path for lowest latency,
+**Deskflow/Synergy's** portable key IDs and clipboard/file features, and
+**ShareMouse's** "drag-and-drop just works" UX goal.
+
+| Tool | License | Mouse/KB | Clipboard | Files |
+|------|---------|:--------:|:---------:|:-----:|
+| ShareMouse | 💰 Paid | ✅ | ✅ | ✅ |
+| Synergy | 💰 Paid | ✅ | ✅ | ✅ |
+| Deskflow | 🟢 GPLv2 | ✅ | ✅ | ⚠️ |
+| Input Leap | 🟢 GPLv2 | ✅ | ✅ | ⚠️ |
+| Barrier | 🟢 | ✅ | ✅ | ❌ |
+| Lan Mouse | 🟢 | ✅ | ❌ | ❌ |
+| **ShareClick** | 🟢 MIT/Apache | ✅ | ✅ | ✅ |
+
+<Note>
+  ShareClick's transport adds only **~6 µs one-way** overhead on loopback — your
+  real input lag is dominated by LAN round-trip and OS injection, not our code.
+  See [Latency](/concepts/latency).
+</Note>
+
+## Get help
+
+<CardGroup cols={2}>
+  <Card title="Troubleshooting" icon="wrench" href="/troubleshooting">
+    Fixes for the most common setup issues.
+  </Card>
+  <Card title="Open an issue" icon="github" href="https://github.com/phun333/ShareClick/issues">
+    Report a bug or ask a question on GitHub.
+  </Card>
+</CardGroup>

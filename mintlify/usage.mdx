@@ -1,0 +1,164 @@
+---
+title: "Using ShareClick"
+description: "Share your keyboard, mouse, clipboard and files once ShareClick is installed on both machines — via the app UI or the terminal."
+icon: "book-open"
+---
+
+Two ways to drive ShareClick: the **app UI** (easiest) or the **terminal** (best
+for a first test, because you can see the logs). If the app won't open at all,
+start with [Installation](/installation).
+
+## Key idea
+
+<Info>
+  - The machine whose **physical keyboard & mouse** you use is the **server**.
+  - The machine you want to **control** is the **client**.
+  - Both machines need the **same passphrase** and the **same network**.
+</Info>
+
+Example below: **Mac = server**, **Windows PC = client**. Swap the roles by
+swapping which one runs "server" vs "client".
+
+## Option A — the app UI
+
+<Steps>
+  <Step title="Set the passphrase on both machines">
+    Launch ShareClick (menu bar on macOS, system tray on Windows) → click the
+    icon → **Settings & Monitor Manager**. Set the **shared passphrase** (same on
+    both), the machine names, and — on the client — the **server host** (or leave
+    blank to auto-discover).
+  </Step>
+  <Step title="Arrange the screens">
+    In the **arrangement** panel, drag the second monitor to where it physically
+    sits next to the first. ShareClick derives which edges border each other.
+    Then **Save**.
+
+    <Tip>
+      Screen sizes are auto-detected — this machine's from the OS, the other's
+      reported automatically on first connect. Add `screen = [w, h]` in the
+      config only to override a wrong detection.
+    </Tip>
+  </Step>
+  <Step title="Start the server (Mac)">
+    Grant **Accessibility** + **Input Monitoring** (System Settings → Privacy &
+    Security) the first time, then tray icon → **Start Server**.
+  </Step>
+  <Step title="Start the client (Windows)">
+    Tray icon → **Start Client**. Allow it through the **firewall** when asked
+    (Private networks → Allow).
+  </Step>
+</Steps>
+
+### Example config
+
+The settings window writes a plain `config.toml`. Here's what it produces:
+
+<CodeGroup>
+```toml Mac (server)
+name = "mac"                    # this machine's name
+psk  = "pick-a-long-secret"     # SAME on both machines
+port = 24800
+auto_edge_switch = true
+
+[[machines]]
+name = "mac"
+right = "windows"               # the PC is to the right of the Mac
+
+[[machines]]
+name = "windows"
+left  = "mac"
+```
+
+```toml Windows (client)
+name = "windows"
+psk  = "pick-a-long-secret"     # EXACTLY the same as the Mac
+port = 24800
+auto_edge_switch = true
+server_host = "192.168.1.20"    # the Mac's IP
+
+[[machines]]
+name = "mac"
+right = "windows"
+
+[[machines]]
+name = "windows"
+left  = "mac"
+```
+</CodeGroup>
+
+### Use it
+
+- Push your mouse into the **shared screen edge** → your keyboard & mouse now
+  control the other machine.
+- Push back to the opposite edge to return, or press **F12** on the server to
+  toggle manually.
+- **Copy** on one machine, **paste** on the other — the clipboard syncs.
+
+## Option B — the terminal
+
+Running from a terminal shows live logs, which makes the first setup much easier
+to diagnose.
+
+<CodeGroup>
+```bash macOS (server)
+shareclick init-config                 # writes the config once
+open -e ~/Library/Application\ Support/shareclick/config.toml   # edit + save
+shareclick serve                       # start the server
+```
+
+```powershell Windows (client)
+$exe = Get-ChildItem "$env:LOCALAPPDATA\Programs\ShareClick","$env:ProgramFiles\ShareClick" `
+       -Filter shareclick.exe -Recurse -ErrorAction SilentlyContinue |
+       Select-Object -First 1 -ExpandProperty FullName
+& $exe init-config
+notepad "$env:APPDATA\shareclick\config.toml"   # name=windows, same psk, server_host=Mac IP
+& $exe connect                                   # allow through the firewall when asked
+```
+</CodeGroup>
+
+On macOS, grant **Accessibility** + **Input Monitoring** to the Terminal (or the
+app), then run `serve` again. You should see **"client authenticated (encrypted
+session established)"** on the Mac.
+
+## Find the server's IP
+
+<CodeGroup>
+```bash macOS
+ipconfig getifaddr en0
+# or: System Settings → Wi-Fi → Details → IP address
+```
+
+```powershell Windows
+ipconfig
+# look for "IPv4 Address" under your Wi-Fi/Ethernet adapter
+```
+</CodeGroup>
+
+<Tip>
+  With `auto_edge_switch` on and both machines on the same LAN, the client can
+  find the server automatically over mDNS — run `connect` with no `server_host`
+  to search for it, or `shareclick discover` to list servers.
+</Tip>
+
+## CLI reference
+
+| Command | Purpose |
+|---|---|
+| `shareclick init-config` | Write an editable `config.toml`. |
+| `shareclick serve` | Start the server (share this machine's input). |
+| `shareclick connect [host]` | Start the client; omit host to auto-discover. |
+| `shareclick discover` | List servers on the network (mDNS). |
+| `shareclick send-file <host:port> <path>` | Send a file to a peer. |
+| `shareclick bench [--encrypted]` | Loopback latency benchmark. |
+| `shareclick tray` | Launch the menu-bar / tray GUI. |
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Configuration" icon="gear" href="/configuration">
+    Every config field, explained.
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/troubleshooting">
+    Common problems and their fixes.
+  </Card>
+</CardGroup>

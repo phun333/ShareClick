@@ -1,0 +1,114 @@
+---
+title: "Quickstart"
+description: "Share your keyboard, mouse, clipboard and files between macOS and Windows in about 60 seconds."
+icon: "rocket"
+---
+
+This guide gets you from zero to a working shared keyboard & mouse in about a
+minute. You'll need ShareClick [installed](/installation) on **both** machines
+and both on the **same Wi-Fi / network**.
+
+## Key idea (read this first)
+
+<Info>
+  - The machine whose **physical keyboard & mouse** you use is the **server**.
+  - The machine you want to **control** is the **client**.
+  - Both machines need the **same passphrase** (it authenticates + encrypts).
+</Info>
+
+The example below uses **Mac = server** and **Windows PC = client**. You can
+swap the roles freely.
+
+## Set it up
+
+<Steps>
+  <Step title="Open Settings on BOTH machines">
+    Launch ShareClick — it lives in the **menu bar** (macOS, top-right) or the
+    **system tray** (Windows, bottom-right). Click the icon →
+    **Settings & Monitor Manager**.
+  </Step>
+  <Step title="Set the same passphrase">
+    Enter an identical **shared passphrase** on both machines (≥ 8 characters).
+    On the client, also set the **server host** (the Mac's IP) — or leave it
+    blank to auto-discover over mDNS.
+  </Step>
+  <Step title="Arrange your screens">
+    In the arrangement panel, drag the second monitor to where it physically
+    sits (left / right / above / below). ShareClick works out which edges border
+    each other. Then **Save**.
+
+    <Tip>
+      Screen sizes are auto-detected. Once arranged, just push the cursor across
+      the shared edge — no hotkey needed. Holding **both Shift keys** always
+      works as a fallback.
+    </Tip>
+  </Step>
+  <Step title="Grant permissions & start (Mac server)">
+    On macOS, grant **Accessibility** and **Input Monitoring** to ShareClick in
+    System Settings → Privacy & Security. Then tray icon → **Start Server**.
+  </Step>
+  <Step title="Start the client (Windows)">
+    On the Windows PC: tray icon → **Start Client**. Allow it through the
+    **firewall** when Windows asks (Private networks → Allow).
+  </Step>
+</Steps>
+
+## Use it
+
+<Steps>
+  <Step title="Cross the edge">
+    Push your mouse into the **shared screen edge** (in the example, the Mac's
+    right edge) → your keyboard & mouse now control the PC. Push back to the
+    opposite edge to return, or press **F12** on the server to toggle manually.
+  </Step>
+  <Step title="Share the clipboard">
+    **Copy** on one machine, **paste** on the other — text and images sync
+    automatically.
+  </Step>
+  <Step title="Send a file">
+    Drag a file onto the ShareClick window, or from a terminal:
+    ```bash
+    shareclick send-file 192.168.1.30:24800 ./report.pdf
+    ```
+    It lands in `./received` on the peer.
+  </Step>
+</Steps>
+
+## Prefer the terminal?
+
+Running from a terminal shows live logs, which makes the first setup much easier
+to diagnose.
+
+<CodeGroup>
+```bash macOS (server)
+shareclick init-config
+open -e ~/Library/Application\ Support/shareclick/config.toml   # edit + save
+shareclick serve
+```
+
+```powershell Windows (client)
+& $exe init-config
+notepad "$env:APPDATA\shareclick\config.toml"    # name=windows, same psk, server_host
+& $exe connect
+```
+</CodeGroup>
+
+You should see **"client authenticated (encrypted session established)"** on the
+server. Full walkthrough in the [Usage guide](/usage).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Full usage guide" icon="book" href="/usage">
+    The app UI and terminal, step by step.
+  </Card>
+  <Card title="Configuration" icon="gear" href="/configuration">
+    Every `config.toml` field explained.
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/troubleshooting">
+    Mouse not moving? Auth failing? Fixes here.
+  </Card>
+  <Card title="Security model" icon="shield-halved" href="/concepts/security">
+    How the encryption and passphrase protect you.
+  </Card>
+</CardGroup>

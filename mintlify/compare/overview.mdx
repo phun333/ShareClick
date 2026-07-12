@@ -1,0 +1,54 @@
+---
+title: "ShareClick vs. alternatives"
+description: "How ShareClick compares to Synergy, ShareMouse, Barrier, Input Leap, Mouse Without Borders and Apple Universal Control."
+icon: "scale-balanced"
+---
+
+ShareClick is a **free, open-source software KVM** focused on Mac↔Windows, with
+the lowest input lag we can squeeze out, encryption on every channel, and
+zero-config mDNS discovery. Here's how it stacks up against the alternatives.
+
+## At a glance
+
+| Tool | License | Mouse/KB | Clipboard | Files | Notes |
+|------|---------|:--------:|:---------:|:-----:|-------|
+| ShareMouse | 💰 Paid | ✅ | ✅ | ✅ | Nice UX, but licensed |
+| Synergy | 💰 Paid | ✅ | ✅ | ✅ | Built on Deskflow |
+| Deskflow | 🟢 GPLv2 | ✅ | ✅ | ⚠️ | Most mature free option |
+| Input Leap | 🟢 GPLv2 | ✅ | ✅ | ⚠️ | Living Barrier fork |
+| Barrier | 🟢 | ✅ | ✅ | ❌ | ⛔ Unmaintained |
+| Lan Mouse | 🟢 | ✅ | ❌ | ❌ | Fastest/cleanest, input-only |
+| **ShareClick** | 🟢 MIT/Apache | ✅ | ✅ | ✅ | Latency-first, best of all |
+
+## Pick a comparison
+
+<CardGroup cols={2}>
+  <Card title="vs. Synergy" icon="arrow-right" href="/compare/vs-synergy">
+    Free & open-source Synergy alternative.
+  </Card>
+  <Card title="vs. ShareMouse" icon="arrow-right" href="/compare/vs-sharemouse">
+    Free forever, including at work.
+  </Card>
+  <Card title="vs. Barrier" icon="arrow-right" href="/compare/vs-barrier">
+    A modern, maintained successor.
+  </Card>
+  <Card title="vs. Input Leap" icon="arrow-right" href="/compare/vs-input-leap">
+    Encrypted by default, with file transfer.
+  </Card>
+  <Card title="vs. Mouse Without Borders" icon="arrow-right" href="/compare/vs-mouse-without-borders">
+    The one that also works on Mac.
+  </Card>
+  <Card title="vs. Universal Control" icon="arrow-right" href="/compare/vs-universal-control">
+    Universal Control for Windows.
+  </Card>
+</CardGroup>
+
+## What we took from each
+
+- **Lan Mouse** → UDP input path + active/inactive state model → lowest latency.
+- **Deskflow/Synergy** → portable key IDs, clipboard & file transfer features.
+- **ShareMouse** → the UX goal: drag-and-drop files should "just work".
+
+<Card title="Download ShareClick (free)" icon="download" href="/download" horizontal>
+  Grab the macOS `.dmg` or Windows installer from GitHub Releases.
+</Card>

@@ -1,0 +1,71 @@
+---
+title: "Troubleshooting"
+description: "Fixes for the most common ShareClick setup issues — permissions, authentication, connection and edge-switching problems."
+icon: "wrench"
+---
+
+Most setup problems fall into a handful of buckets. Find your symptom below; if
+you're still stuck, [open an issue](https://github.com/phun333/ShareClick/issues)
+with the terminal output from **both** machines.
+
+## Common symptoms
+
+<AccordionGroup>
+  <Accordion title="Mouse doesn't move (macOS server)" icon="arrow-pointer">
+    Enable **both** **Accessibility** *and* **Input Monitoring** for ShareClick
+    (or your Terminal, if running from the terminal) in System Settings → Privacy
+    & Security. Then **quit and reopen** ShareClick — permissions only take
+    effect on relaunch.
+  </Accordion>
+  <Accordion title="handshake / auth failed" icon="key">
+    The `psk` isn't identical on both machines. Passphrases are
+    case-sensitive and must match exactly. Re-check both `config.toml` files.
+  </Accordion>
+  <Accordion title="Client can't connect" icon="plug-circle-xmark">
+    Check all of:
+    - Both machines on the **same Wi-Fi / network**?
+    - Windows **firewall** allowed ShareClick (Private networks)?
+    - Correct `server_host` IP on the client?
+
+    Try `shareclick discover` to see if the server is visible over mDNS.
+  </Accordion>
+  <Accordion title="name ... is not present" icon="tag">
+    The `name` field must match one of the `[[machines]]` entries in the same
+    config file. Fix the spelling so they line up.
+  </Accordion>
+  <Accordion title="Nothing happens at the edge" icon="border-none">
+    Check the layout edges (`right` / `left` / `top` / `bottom`) in
+    `[[machines]]` and confirm `auto_edge_switch = true`. As a reliable escape,
+    **hold both Shift keys** to toggle control from the keyboard, or press
+    **F12** on the server.
+  </Accordion>
+  <Accordion title="Windows: no tray icon after launching" icon="window-maximize">
+    New icons hide under the **"^" (show hidden icons)** arrow by the clock — drag
+    ShareClick onto the taskbar. For a first test you can skip the tray entirely
+    and run `shareclick.exe connect` from PowerShell.
+  </Accordion>
+  <Accordion title='macOS: app is damaged / cannot open' icon="triangle-exclamation">
+    This is the unsigned-app quarantine flag. Remove it:
+    ```bash
+    xattr -cr /Applications/ShareClick.app
+    ```
+    Full details in [Installation](/installation).
+  </Accordion>
+</AccordionGroup>
+
+## Quick reference
+
+| Symptom | Fix |
+|---|---|
+| Mouse doesn't move (Mac server) | Enable **Accessibility** *and* **Input Monitoring**; quit and reopen. |
+| `handshake/auth failed` | The `psk` isn't identical on both machines. |
+| Client can't connect | Same Wi-Fi? Firewall allowed? Correct `server_host`? Try `discover`. |
+| `name ... is not present` | `name` must match a `[[machines]]` entry. |
+| Nothing at the edge | Check layout edges and `auto_edge_switch = true`. Hold both Shift keys. |
+| Windows: no tray icon | Look under the **"^"** hidden-icons arrow; drag it to the taskbar. |
+
+## Still stuck?
+
+<Card title="Open an issue on GitHub" icon="github" href="https://github.com/phun333/ShareClick/issues" horizontal>
+  Include the terminal output from both machines so we can help fast.
+</Card>

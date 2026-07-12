@@ -1,0 +1,98 @@
+---
+title: "Download ShareClick"
+description: "Download the latest ShareClick for macOS and Windows — free and open source. One keyboard, mouse, clipboard and files across your machines."
+icon: "download"
+mode: "wide"
+---
+
+ShareClick is **free and open source**. Grab the installer for your OS below —
+no account, no Rust, no license. After installing, follow the
+[Quickstart](/quickstart) to share your mouse & keyboard in about a minute.
+
+{/* AUTO-DOWNLOAD:START — this block is updated automatically on each release. Do not edit by hand. */}
+
+<Info>
+  **Latest version:** the links below always point to the most recent release.
+</Info>
+
+<CardGroup cols={2}>
+  <Card title="Download for macOS" icon="apple" href="https://github.com/phun333/ShareClick/releases/latest">
+    Universal `.dmg` — Apple Silicon + Intel.
+  </Card>
+  <Card title="Download for Windows" icon="windows" href="https://github.com/phun333/ShareClick/releases/latest">
+    `.exe` installer — no administrator rights needed.
+  </Card>
+</CardGroup>
+
+{/* AUTO-DOWNLOAD:END */}
+
+<Warning>
+  The builds are **unsigned** (no paid Apple/Microsoft certificate), so your OS
+  shows a one-time warning on first launch. It's completely safe and easy to get
+  past — see the [Installation guide](/installation#why-the-warnings-is-it-safe).
+</Warning>
+
+## Install with a package manager
+
+<Tabs>
+  <Tab title="macOS (Homebrew)">
+    ```bash
+    brew install --cask phun333/tap/shareclick
+    # if macOS still blocks it:
+    xattr -cr "/Applications/ShareClick.app"
+    ```
+  </Tab>
+  <Tab title="Windows (Scoop)">
+    ```powershell
+    scoop install https://raw.githubusercontent.com/phun333/ShareClick/main/packaging/scoop/shareclick.json
+    ```
+  </Tab>
+</Tabs>
+
+## After you install
+
+<Steps>
+  <Step title="Grant permissions (macOS)">
+    Enable **Accessibility** + **Input Monitoring** for ShareClick in System
+    Settings → Privacy & Security. Full details in the
+    [Installation guide](/installation#macos).
+  </Step>
+  <Step title="Allow the firewall (Windows)">
+    On first run, tick **Private networks** and click **Allow access** (port
+    24800).
+  </Step>
+  <Step title="Set it up">
+    Open [Quickstart](/quickstart) and share your keyboard & mouse in 60 seconds.
+  </Step>
+</Steps>
+
+## What you get
+
+<CardGroup cols={2}>
+  <Card title="One keyboard & mouse" icon="keyboard">
+    Push your cursor across the screen edge to control the other machine.
+  </Card>
+  <Card title="Shared clipboard" icon="clipboard">
+    Copy on one machine, paste on the other — text and images.
+  </Card>
+  <Card title="Drag-and-drop files" icon="file-arrow-up">
+    Send files between machines over a reliable, chunked channel.
+  </Card>
+  <Card title="End-to-end encrypted" icon="lock">
+    X25519 + a shared passphrase + ChaCha20-Poly1305. LAN-only, no cloud.
+  </Card>
+</CardGroup>
+
+## System requirements
+
+| | macOS | Windows |
+|---|---|---|
+| Version | macOS 11 Big Sur or newer | Windows 10 / 11 |
+| Architecture | Apple Silicon + Intel (universal) | x64 |
+| Network | Both machines on the same LAN / Wi-Fi | Same |
+| Permissions | Accessibility + Input Monitoring | Firewall allow (port 24800) |
+
+<Note>
+  Prefer to build from source? See the [Development guide](/develop/development)
+  — no prebuilt binary, no warnings, full control.
+</Note>

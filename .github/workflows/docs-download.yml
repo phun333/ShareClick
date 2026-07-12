@@ -1,0 +1,42 @@
+name: Update docs download links
+
+# Keeps mintlify/download.mdx pointing at the latest release, so the docs site
+# is the single front door for downloads — users never need to browse GitHub.
+on:
+  release:
+    types: [published, edited, released]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: docs-download
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Update download page from latest release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/update-download-page.mjs
+
+      - name: Commit if changed
+        run: |
+          if [[ -n "$(git status --porcelain mintlify/download.mdx)" ]]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add mintlify/download.mdx
+            git commit -m "docs: update download links to latest release"
+            git push
+          else
+            echo "download.mdx already up to date — nothing to commit."
+          fi

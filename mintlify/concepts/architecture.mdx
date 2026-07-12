@@ -1,0 +1,152 @@
+---
+title: "Architecture"
+description: "ShareClick's dual-channel design: UDP for low-latency input, TCP for reliable clipboard and files — and how a keypress reaches the other machine."
+icon: "diagram-project"
+---
+
+## Goals, in priority order
+
+<Steps>
+  <Step title="Lowest possible input lag">
+    The headline feature. Every design choice defers to it.
+  </Step>
+  <Step title="Cross-platform">
+    macOS ⇄ Windows (Linux best-effort).
+  </Step>
+  <Step title="Secure by default">
+    Authenticated encryption on every channel.
+  </Step>
+  <Step title="Open source & self-hostable">
+    No accounts, no cloud, LAN-only.
+  </Step>
+  <Step title="Feature-complete vs. paid tools">
+    Clipboard + file transfer + seamless edge switching.
+  </Step>
+</Steps>
+
+## The big picture
+
+```text
+        SERVER (has the physical keyboard & mouse)      CLIENT (receives input)
+   ┌──────────────────────────────────────┐        ┌──────────────────────────────┐
+   │ capture (rdev grab)                    │        │ emit (enigo)                 │
+   │   captures + can SWALLOW local input   │        │   injects received events    │
+   │        │                               │        │        ▲                     │
+   │        ▼  coalesced per tick           │  UDP   │        │                     │
+   │   InputChannel ───────────────────────────────► │   InputChannel              │
+   │   (encrypted, seq-numbered)            │ input  │   (decrypts, applies)        │
+   │                                        │        │   cursor.rs tracks position  │
+   │   Control (active? entry edge)         │◄────── │   → sends Leave to return    │
+   ├────────────────────────────────────────┤  TCP   ├──────────────────────────────┤
+   │ clipboard.rs (arboard) ─┐              │  bulk  │  ┌─ clipboard.rs (arboard)   │
+   │ filexfer.rs (chunks)  ──┼─ BulkConn ───────────────┼─ filexfer.rs (received/)  │
+   │                         └ (encrypted)  │        │  └                           │
+   └────────────────────────────────────────┘        └──────────────────────────────┘
+                 ▲ mDNS advertise                             ▲ mDNS discover
+```
+
+## Why two channels?
+
+Input and bulk data have opposite requirements:
+
+| | Input (mouse/keys) | Bulk (clipboard/files) |
+|---|---|---|
+| Needs | lowest latency | reliable, ordered delivery |
+| Tolerates loss? | yes (next move supersedes) | no |
+| Transport | **UDP** | **TCP** |
+| Why | no head-of-line blocking | a lost byte corrupts the paste |
+
+Mixing them would force the fast path to wait for retransmits of the slow path.
+Keeping them separate is the single most important latency decision — see
+[Decision #1](/develop/decisions).
+
+## Crate layout
+
+```text
+crates/
+  protocol/   # shared, dependency-light: wire types + crypto. No OS calls.
+  app/        # the binary: transport, capture/emit, features, CLI, tray.
+```
+
+`protocol` is deliberately tiny and platform-agnostic so it can be unit-tested
+anywhere and reused (e.g. a future mobile client). `app` holds everything that
+touches the OS or the network.
+
+## Module map (`crates/app/src`)
+
+| Module | Responsibility | Native? |
+|---|---|:---:|
+| `main.rs` | CLI parsing (clap); dispatch; no-arg → tray | — |
+| `transport.rs` | UDP `InputChannel`: framing, seq numbers, encryption | — |
+| `bench.rs` | Loopback latency benchmark (the primary metric) | — |
+| `bulk.rs` | TCP `BulkConn`: length-prefixed frames, handshake, encryption | — |
+| `filexfer.rs` | Chunked file send + reassembly (`received/`) | — |
+| `config.rs` | TOML settings + monitor manager (machine/edge layout) | — |
+| `edge.rs` | Server-side screen-edge hit detection | — |
+| `cursor.rs` | Client-side cursor integration for auto-return | — |
+| `control.rs` | Shared control state (active? entry edge) | — |
+| `capture.rs` | `rdev` global grab: capture + suppress local input | ✅ |
+| `emit.rs` | `enigo` input injection | ✅ |
+| `keymap.rs` | rdev ⇄ portable `Key` ⇄ enigo translation | ✅ |
+| `clipboard.rs` | Bidirectional clipboard sync (text + image) | ✅ |
+| `discovery.rs` | mDNS advertise/browse | ✅ |
+| `run.rs` | Wires everything into `serve` / `connect` loops | ✅ |
+| `tray.rs` | Menu-bar / system-tray GUI (`tray` feature) | ✅ + `tray` |
+
+Non-native modules build and test with `--no-default-features`, which is what CI
+uses for fast, permissionless unit tests.
+
+## Feature flags
+
+| Flag | Pulls in | Purpose |
+|---|---|---|
+| `native` (default) | enigo, rdev, arboard, mdns-sd | real input/clipboard/discovery |
+| `tray` | native + tray-icon, tao | the GUI menu-bar/tray app |
+
+The layering keeps the **testable core** (transport, protocol, crypto, config,
+edge, cursor, file framing) free of any display or OS-permission dependency —
+that's why 23 unit tests run headlessly in CI.
+
+## How a keypress reaches the other machine
+
+<Steps>
+  <Step title="Capture & swallow">
+    `capture.rs` (rdev grab) sees the key. If control is on the client, it maps
+    the native key to a portable `Key`, forwards it, and **swallows** it locally.
+  </Step>
+  <Step title="Coalesce & seal">
+    `run.rs::run_server_input` coalesces the tick's events into one
+    `InputMsg::Events`, and `transport.rs` seals + sends it over UDP.
+  </Step>
+  <Step title="Decrypt & de-dup">
+    On the client, `transport.rs` decrypts, drops stragglers by sequence number,
+    and hands the batch to `run.rs::connect`.
+  </Step>
+  <Step title="Inject & track">
+    `emit.rs` injects each event with enigo. `cursor.rs` integrates mouse deltas;
+    if the cursor crosses back over the border edge it sends `InputMsg::Leave`.
+  </Step>
+</Steps>
+
+## Control handoff (the "KVM" part)
+
+Two ways control moves from server to client:
+
+- **Automatic edge switch:** `edge.rs` detects the server cursor hitting a
+  bordered screen edge (from the monitor-manager layout) → `Control.active = true`
+  and the entry position is recorded.
+- **F12 hotkey:** manual toggle, always available as a fallback.
+
+Return is symmetric: the client's `cursor.rs` detects the cursor crossing back
+and sends `Leave`; the server clears `active`. See [Decision #7](/develop/decisions).
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Wire protocol" icon="network-wired" href="/concepts/protocol">
+    The exact message types on each channel.
+  </Card>
+  <Card title="Latency" icon="gauge-high" href="/concepts/latency">
+    Where the microseconds actually go.
+  </Card>
+</CardGroup>

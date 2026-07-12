@@ -1,0 +1,134 @@
+---
+title: "Development guide"
+description: "Build ShareClick from source, run the headless test suite, and contribute features while keeping the low-latency hot path clean."
+icon: "code"
+---
+
+## Prerequisites
+
+- [Rust](https://rustup.rs) stable (1.80+).
+- macOS: Xcode command-line tools. Windows: MSVC build tools.
+- To run `serve` / `connect` live you need OS permission (see below).
+
+## Everyday commands
+
+```bash
+# Fast, permissionless: builds the testable core only.
+cargo build --no-default-features
+cargo test  --no-default-features        # unit tests, headless-safe
+
+# Full native build (input capture/injection, clipboard, mDNS).
+cargo build --release
+
+# With the GUI menu-bar / tray app.
+cargo build --release --features tray
+
+# The headline metric: input-channel latency.
+cargo run --release -- bench --count 20000            # plaintext
+cargo run --release -- bench --count 20000 --encrypted
+```
+
+`cargo test` runs **23 unit tests** across `protocol` (wire + crypto) and `app`
+(bulk framing, file transfer, config, edge, cursor). None require a display or
+special permissions — keep it that way so CI stays green.
+
+## OS permissions (for live testing)
+
+<Tabs>
+  <Tab title="macOS">
+    System Settings → Privacy & Security →
+    - **Accessibility** (rdev capture + enigo injection), and
+    - **Input Monitoring** (rdev).
+
+    Add your terminal, or the installed `ShareClick.app`. Permissions are tied to
+    the *bundle identity*, so a packaged `.app` remembers the grant; a bare
+    binary run from Terminal ties the grant to Terminal.
+  </Tab>
+  <Tab title="Windows">
+    Allow `shareclick.exe` through the firewall on first run (port 24800, TCP +
+    UDP).
+  </Tab>
+</Tabs>
+
+## Running a real two-machine test
+
+```bash
+# Machine A (has the keyboard/mouse):
+shareclick init-config      # edit psk + [[machines]] layout
+shareclick serve
+
+# Machine B (same psk, name = its own machine):
+shareclick init-config      # set name, server_host or rely on mDNS
+shareclick connect          # or: shareclick connect <host>
+```
+
+Move the cursor into a bordered edge to hand off; F12 toggles manually.
+
+## Project conventions
+
+<AccordionGroup>
+  <Accordion title="Keep the hot path allocation-light and lock-free" icon="bolt">
+    `transport.rs` uses a dedicated blocking socket and immutable cipher state
+    precisely to avoid scheduler jitter and per-packet locks. Don't add a `Mutex`
+    to the send/recv path.
+  </Accordion>
+  <Accordion title="Native code goes behind #[cfg(feature = native)]" icon="layer-group">
+    Pure logic (protocol, framing, geometry) stays testable without it.
+  </Accordion>
+  <Accordion title="Every new wire message gets a round-trip test" icon="vial">
+    Every geometry/state helper (`edge.rs`, `cursor.rs`) gets unit tests — they
+    encode the UX rules.
+  </Accordion>
+  <Accordion title="Latency is a tracked metric" icon="gauge-high">
+    Before/after a change on the input path, run `bench --encrypted` and confirm
+    no regression. The autoresearch log (`autoresearch.jsonl`) records the
+    history.
+  </Accordion>
+</AccordionGroup>
+
+## Adding a feature (checklist)
+
+<Steps>
+  <Step title="Decide: pure logic vs. native">
+    Prefer pushing logic into a pure, tested module.
+  </Step>
+  <Step title="Wire message? Update the protocol">
+    Update the [wire protocol](/concepts/protocol) docs, add a test, and consider
+    bumping `PROTOCOL_VERSION`.
+  </Step>
+  <Step title="Wire it into run.rs">
+    Into `serve` / `connect`, and — if user-facing — the tray menu.
+  </Step>
+  <Step title="Add a config field if needed">
+    In `config.rs`, with `#[serde(default)]` so old configs still load.
+  </Step>
+  <Step title="Update the docs">
+    The [architecture module map](/concepts/architecture) and `CHANGELOG.md`.
+  </Step>
+  <Step title="Test">
+    Run `cargo test` and `bench --encrypted`.
+  </Step>
+</Steps>
+
+## Repository layout
+
+```text
+crates/protocol/   # wire types + crypto (no OS deps)
+crates/app/        # binary: transport, features, CLI, tray
+packaging/macos/   # build-app.sh → ShareClick.app + .dmg
+packaging/windows/ # shareclick.iss → Inno Setup installer
+.github/workflows/ # CI + release automation
+docs/              # source documentation
+autoresearch.*     # experiment log + backlog (latency history)
+```
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Decision log" icon="scroll" href="/develop/decisions">
+    The "why" behind the architecture.
+  </Card>
+  <Card title="Releasing" icon="tag" href="/develop/releasing">
+    How to ship a new version.
+  </Card>
+</CardGroup>

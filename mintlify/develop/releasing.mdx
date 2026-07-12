@@ -1,0 +1,117 @@
+---
+title: "Releasing"
+description: "The exact, repeatable process to ship a new ShareClick version — SemVer policy, the release checklist, and what CI builds."
+icon: "tag"
+---
+
+This is the exact, repeatable process to ship a new version. Following it means
+end users always get working one-click installers and the history stays clean.
+
+## Versioning policy (SemVer)
+
+`MAJOR.MINOR.PATCH`:
+
+| Bump | When | Wire/config |
+|---|---|---|
+| **PATCH** | bug fixes | no wire or config changes |
+| **MINOR** | new features | backward-compatible (old configs still load via `#[serde(default)]`; `PROTOCOL_VERSION` unchanged) |
+| **MAJOR** | breaking changes | also bump `PROTOCOL_VERSION` in `crates/protocol/src/lib.rs` and document the migration |
+
+The crate version lives once in the workspace: `Cargo.toml → [workspace.package]
+version`. All crates inherit it.
+
+## Release checklist
+
+<Steps>
+  <Step title="Green build & tests">
+    ```bash
+    cargo test                       # native
+    cargo test --no-default-features # core
+    cargo build --release --features tray
+    cargo run --release -- bench --encrypted   # no latency regression
+    ```
+  </Step>
+  <Step title="Bump the version">
+    In `Cargo.toml` (`[workspace.package] version`). Run `cargo build` once so
+    `Cargo.lock` updates.
+  </Step>
+  <Step title="Update CHANGELOG.md">
+    Move `## [Unreleased]` items under a new `## [X.Y.Z] - YYYY-MM-DD` heading;
+    start a fresh empty `Unreleased`.
+  </Step>
+  <Step title="Commit on main">
+    ```bash
+    git add -A && git commit -m "release: vX.Y.Z"
+    ```
+  </Step>
+  <Step title="Tag & push">
+    This triggers the CI release workflow:
+    ```bash
+    git tag vX.Y.Z
+    git push origin main --tags
+    ```
+  </Step>
+  <Step title="Wait for CI">
+    `.github/workflows/release.yml` builds and attaches
+    `ShareClick-X.Y.Z.dmg` (macOS universal) and
+    `ShareClick-Setup-X.Y.Z.exe` (Windows installer) to a GitHub Release.
+  </Step>
+  <Step title="Smoke-test & announce">
+    Install, launch and connect once on both OSes. The Release page is the
+    download link for users.
+  </Step>
+</Steps>
+
+## What CI does
+
+<AccordionGroup>
+  <Accordion title="Trigger" icon="play">
+    Pushing a tag matching `v*` (or a manual `workflow_dispatch`).
+  </Accordion>
+  <Accordion title="macos job (macos-14)" icon="apple">
+    Adds both Apple targets, runs `packaging/macos/build-app.sh $VERSION` →
+    universal `.app` + `.dmg` (arm64 + Intel).
+  </Accordion>
+  <Accordion title="windows job (windows-latest)" icon="windows">
+    `cargo build --release --features tray`, then `choco install innosetup` and
+    `ISCC /DMyAppVersion=$VERSION shareclick.iss` → `.exe` installer.
+  </Accordion>
+  <Accordion title="release job" icon="rocket">
+    Downloads both artifacts and publishes the GitHub Release with auto-generated
+    notes.
+  </Accordion>
+</AccordionGroup>
+
+## Building installers locally
+
+<CodeGroup>
+```bash macOS
+# produces dist/ShareClick.app + dist/ShareClick-<ver>.dmg
+bash packaging/macos/build-app.sh 0.1.0
+```
+
+```powershell Windows
+# after cargo build --release --features tray
+iscc /DMyAppVersion=0.1.0 packaging\windows\shareclick.iss
+```
+</CodeGroup>
+
+## Code signing & notarization (current status)
+
+Builds are **unsigned** today (no paid developer certificates):
+
+- **macOS:** Gatekeeper blocks first launch. Removing this friction needs an
+  Apple Developer ID ($99/yr) and a notarization step (`codesign` + `xcrun
+  notarytool submit`). The build script already ad-hoc signs so it runs locally.
+- **Windows:** SmartScreen shows an "unknown publisher" warning. An EV/OV
+  code-signing certificate would remove it.
+
+When certificates are available, add the signing secrets and steps to the CI
+jobs (see the TODO markers in `release.yml`).
+
+## Rollback
+
+<Warning>
+  If a release is broken, delete the GitHub Release + tag, fix, and re-tag with a
+  new PATCH version. **Never re-use a published version number.**
+</Warning>
