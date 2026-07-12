@@ -252,10 +252,25 @@ pub fn pair() -> anyhow::Result<()> {
     }
     tracing::info!(name = %me, "auto-pairing: listening, advertising and searching…");
 
-    let my_prefix = format!("{me}.");
+    // A discovered address is OURS if connecting to it picks the same local
+    // IP (same host). Catches our own ghost advertisements too, which mDNS
+    // renames to "mac (2)" after an unclean restart — those must be ignored.
+    fn is_self(addr: &SocketAddr) -> bool {
+        std::net::UdpSocket::bind("0.0.0.0:0")
+            .and_then(|s| {
+                s.connect(addr)?;
+                s.local_addr()
+            })
+            .map(|l| l.ip() == addr.ip())
+            .unwrap_or(false)
+    }
+
+    let my_prefix = format!("{me}");
     loop {
         let peers = discovery::list(Duration::from_secs(2)).unwrap_or_default();
-        if let Some((fullname, addr)) = peers.into_iter().find(|(n, _)| !n.starts_with(&my_prefix))
+        if let Some((fullname, addr)) = peers
+            .into_iter()
+            .find(|(n, a)| !n.starts_with(&my_prefix) && !is_self(a))
         {
             let peer = fullname.split('.').next().unwrap_or("peer").to_string();
             // Deterministic tiebreaker: exactly one side dials.
