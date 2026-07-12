@@ -218,7 +218,6 @@ struct SettingsApp {
     this_name: String,
     other_name: String,
     server_host: String,
-    role: String,
     /// Show the passphrase in clear text (the "görüntüle" eye toggle).
     show_psk: bool,
     /// The other machine has connected at least once (its real screen size is
@@ -246,7 +245,7 @@ impl SettingsApp {
         let this_res = crate::emit::main_display_size().unwrap_or((1470, 956));
 
         // Derive current arrangement from an existing config, if any.
-        let (this_name, other_name, side, other_res, psk, port, server_host, offset, role) = match &cfg {
+        let (this_name, other_name, side, other_res, psk, port, server_host, offset) = match &cfg {
             Some(c) => {
                 let this = c.name.clone();
                 let other = c
@@ -284,7 +283,6 @@ impl SettingsApp {
                     c.port.to_string(),
                     c.server_host.clone().unwrap_or_default(),
                     c.offset,
-                    c.role.clone().unwrap_or_else(|| "server".into()),
                 )
             }
             None => (
@@ -296,7 +294,6 @@ impl SettingsApp {
                 "24800".into(),
                 String::new(),
                 0,
-                "server".into(),
             ),
         };
 
@@ -313,7 +310,6 @@ impl SettingsApp {
             drag: egui::Vec2::ZERO,
             offset,
             placed: false,
-            role,
             show_psk: false,
             peer_known: cfg
                 .as_ref()
@@ -350,7 +346,9 @@ impl SettingsApp {
                 }
             },
             offset: self.offset,
-            role: Some(self.role.clone()),
+            // Roles are gone from the UI: pairing decides who listens, control
+            // is symmetric. (CLI serve/connect still exist for power users.)
+            role: None,
             machines: vec![this, other],
         };
         cfg.validate()?;
@@ -386,18 +384,6 @@ impl eframe::App for SettingsApp {
                 ui.end_row();
                 ui.label("This machine name");
                 ui.text_edit_singleline(&mut self.this_name);
-                ui.end_row();
-                ui.label("This machine runs as");
-                egui::ComboBox::from_id_salt("role")
-                    .selected_text(if self.role == "client" {
-                        "Client (controlled)"
-                    } else {
-                        "Server (shares keyboard & mouse)"
-                    })
-                    .show_ui(ui, |ui| {
-                        ui.selectable_value(&mut self.role, "server".into(), "Server (shares keyboard & mouse)");
-                        ui.selectable_value(&mut self.role, "client".into(), "Client (controlled)");
-                    });
                 ui.end_row();
                 ui.label("Other machine name");
                 ui.text_edit_singleline(&mut self.other_name);

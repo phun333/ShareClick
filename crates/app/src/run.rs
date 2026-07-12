@@ -217,12 +217,12 @@ pub fn pair() -> anyhow::Result<()> {
         let peers = discovery::list(Duration::from_secs(2)).unwrap_or_default();
         if let Some((fullname, addr)) = peers.into_iter().find(|(n, _)| !n.starts_with(&my_prefix)) {
             let peer = fullname.split('.').next().unwrap_or("peer").to_string();
-            let am_server = match cfg.role.as_deref() {
-                Some("server") => true,
-                Some("client") => false,
-                // No explicit role: the lexicographically smaller name serves.
-                _ => me < peer,
-            };
+            // ALWAYS the deterministic name tiebreaker — never the config role.
+            // (If both configs said "server", both would listen forever and the
+            // pairing would deadlock; control is symmetric anyway, so who
+            // listens is irrelevant.)
+            let am_server = me < peer;
+            drop(_advert); // serve() re-advertises; avoid a name conflict
             if am_server {
                 tracing::info!(%peer, "paired — running as server");
                 return serve(&format!("0.0.0.0:{port}"));
