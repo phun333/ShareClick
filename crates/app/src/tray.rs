@@ -71,7 +71,11 @@ pub fn run() -> anyhow::Result<()> {
             item_status.set_text("ShareClick — serving");
             spawn_serve();
         }
-        _ => {}
+        // No role set → zero-config auto-pairing.
+        _ => {
+            item_status.set_text("ShareClick — pairing…");
+            spawn_pair();
+        }
     }
 
     // The tray icon must be created after the loop starts on macOS, so we build
@@ -149,6 +153,15 @@ fn spawn_connect() {
         // `connect(None)` reads `server_host` from the config itself.
         if let Err(e) = crate::run::connect(None) {
             eprintln!("client error: {e} (set `server_host` in Settings)");
+        }
+    });
+}
+
+/// Zero-config auto-pairing in the background (find the peer + connect).
+fn spawn_pair() {
+    std::thread::spawn(|| {
+        if let Err(e) = crate::run::pair() {
+            eprintln!("pairing error: {e}");
         }
     });
 }

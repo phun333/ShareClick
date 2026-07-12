@@ -79,6 +79,9 @@ enum Command {
     /// Run in the background using the role saved in the config ("server" or
     /// "client"). This is what the auto-start / background service launches.
     Run,
+    /// Zero-config auto-pairing: find the other machine on the LAN and connect
+    /// automatically — no IP, no role picking.
+    Pair,
     /// Install ShareClick as a login service: auto-starts in the background on
     /// every login, runs the configured role, no terminal, no second app.
     InstallService,
@@ -151,16 +154,29 @@ fn main() -> anyhow::Result<()> {
             anyhow::bail!("serve/connect require the `native` feature (build without --no-default-features)")
         }
         #[cfg(feature = "native")]
+        Command::Pair => {
+            #[cfg(all(windows, feature = "tray"))]
+            hide_console_window();
+            run::pair()
+        }
+        #[cfg(not(feature = "native"))]
+        Command::Pair => anyhow::bail!("pair requires the `native` feature"),
+        #[cfg(feature = "native")]
         Command::Run => {
             #[cfg(all(windows, feature = "tray"))]
             hide_console_window();
             let cfg = config::Config::load(&config::Config::default_path())?;
-            if cfg.role.as_deref() == Some("client") {
-                tracing::info!("role = client; connecting");
-                run::connect(None)
-            } else {
-                tracing::info!("role = server; serving");
-                run::serve(&format!("0.0.0.0:{}", cfg.port))
+            match cfg.role.as_deref() {
+                Some("server") => {
+                    tracing::info!("role = server; serving");
+                    run::serve(&format!("0.0.0.0:{}", cfg.port))
+                }
+                Some("client") => {
+                    tracing::info!("role = client; connecting");
+                    run::connect(None)
+                }
+                // No role set → zero-config auto-pair.
+                _ => run::pair(),
             }
         }
         #[cfg(not(feature = "native"))]

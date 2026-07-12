@@ -107,6 +107,53 @@ fn resolve(addr: &str) -> anyhow::Result<SocketAddr> {
         .ok_or_else(|| anyhow::anyhow!("could not resolve address {addr}"))
 }
 
+/// Zero-config auto-pairing: advertise ourselves and search for a peer on the
+/// LAN, then connect automatically — no IP, no manual matching. If both sides
+/// have an explicit `role`, that decides who serves; otherwise a deterministic
+/// name tiebreaker makes exactly one side the server. The client retries until
+/// the server is up, so start order doesn't matter.
+#[cfg(feature = "native")]
+pub fn pair() -> anyhow::Result<()> {
+    let cfg = load_config()?;
+    let me = cfg.name.clone();
+    let port = cfg.port;
+    // Keep advertising for the whole search so the peer can find us too.
+    let _advert = discovery::advertise(&me, port)
+        .map_err(|e| tracing::warn!(error = %e, "mDNS advertise failed"))
+        .ok();
+    tracing::info!(name = %me, "auto-pairing: advertising and searching for a peer…");
+
+    let my_prefix = format!("{me}.");
+    loop {
+        let peers = discovery::list(Duration::from_secs(2)).unwrap_or_default();
+        if let Some((fullname, addr)) = peers.into_iter().find(|(n, _)| !n.starts_with(&my_prefix)) {
+            let peer = fullname.split('.').next().unwrap_or("peer").to_string();
+            let am_server = match cfg.role.as_deref() {
+                Some("server") => true,
+                Some("client") => false,
+                // No explicit role: the lexicographically smaller name serves.
+                _ => me < peer,
+            };
+            if am_server {
+                tracing::info!(%peer, "paired — running as server");
+                return serve(&format!("0.0.0.0:{port}"));
+            }
+            tracing::info!(%peer, %addr, "paired — running as client");
+            // The server may still be starting; retry until it answers.
+            loop {
+                match connect(Some(&addr.to_string())) {
+                    Ok(()) => return Ok(()),
+                    Err(e) => {
+                        tracing::warn!(error = %e, "connect failed; retrying in 2s");
+                        std::thread::sleep(Duration::from_secs(2));
+                    }
+                }
+            }
+        }
+        tracing::info!("no peer found yet; still searching…");
+    }
+}
+
 /// Persist a peer's reported screen size into our config, so the settings window
 /// can show the real remote resolution. The client reports it on connect (like
 /// Deskflow's DINF message).
