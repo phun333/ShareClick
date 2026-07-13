@@ -74,3 +74,10 @@ the cursor crosses at the exact placed position (not just proportional). Design:
   resulting offset in config. Currently the arrangement centre-snaps, so there is
   no offset to honour yet — GUI offset placement is a prerequisite.
 - Needs BOTH binaries updated + a 2-machine live test.
+
+## v1.0 roadmap (agreed with user, execute in order)
+1. Live-test & stabilize symmetric + device-id pairing (v0.6.0-test)
+2. Tray live status ("connected to X") + native notifications (pair/drop) + macOS Accessibility-permission dialog + Disconnect/Pause menu item
+3. Reconnect resilience: auto-redial on drop, survive sleep/wake + IP change
+4. Windows installer firewall rule (mDNS/UDP) + pairing-code confirm flow (generate on one, show+confirm on other) -> release v1.0
+5. Post-1.0: drag-drop file transfer, 3+ machines, Linux
