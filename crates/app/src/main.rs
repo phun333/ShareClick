@@ -199,7 +199,7 @@ fn main() -> anyhow::Result<()> {
             if found.is_empty() {
                 println!("no ShareClick servers found on the local network");
             } else {
-                for (name, addr) in found {
+                for (name, addr, _id) in found {
                     println!("{name}  ->  {addr}");
                 }
             }

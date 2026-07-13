@@ -252,29 +252,18 @@ pub fn pair() -> anyhow::Result<()> {
     }
     tracing::info!(name = %me, "auto-pairing: listening, advertising and searching…");
 
-    // A discovered address is OURS if connecting to it picks the same local
-    // IP (same host). Catches our own ghost advertisements too, which mDNS
-    // renames to "mac (2)" after an unclean restart — those must be ignored.
-    fn is_self(addr: &SocketAddr) -> bool {
-        std::net::UdpSocket::bind("0.0.0.0:0")
-            .and_then(|s| {
-                s.connect(addr)?;
-                s.local_addr()
-            })
-            .map(|l| l.ip() == addr.ip())
-            .unwrap_or(false)
-    }
-
-    let my_prefix = format!("{me}");
+    let my_id = Config::ensure_device_id(&Config::default_path());
     loop {
         let peers = discovery::list(Duration::from_secs(2)).unwrap_or_default();
-        if let Some((fullname, addr)) = peers
+        // Identity = stable device id (never the name; names can collide or be
+        // renamed to "mac (2)" by mDNS). Skip ourselves by id.
+        if let Some((fullname, addr, pid)) = peers
             .into_iter()
-            .find(|(n, a)| !n.starts_with(&my_prefix) && !is_self(a))
+            .find(|(_, _, pid)| !pid.is_empty() && *pid != my_id)
         {
             let peer = fullname.split('.').next().unwrap_or("peer").to_string();
-            // Deterministic tiebreaker: exactly one side dials.
-            if me > peer {
+            // Deterministic tiebreaker on the ids: exactly one side dials.
+            if my_id > pid {
                 tracing::info!(%peer, %addr, "paired — dialing");
                 loop {
                     if let Err(e) = connect(Some(&addr.to_string())) {
@@ -283,8 +272,6 @@ pub fn pair() -> anyhow::Result<()> {
                     }
                 }
             }
-            // me < peer: we're the listener; the peer dials us (serve thread is
-            // already up). Just park here.
             tracing::info!(%peer, "paired — the peer will connect to us");
             loop {
                 std::thread::sleep(Duration::from_secs(3600));
@@ -648,7 +635,8 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
     }
 
     // Advertise over mDNS so peers can find us without an IP.
-    let _advert = discovery::advertise(&cfg.name, bind_addr.port())
+    let my_id = Config::ensure_device_id(&Config::default_path());
+    let _advert = discovery::advertise(&cfg.name, bind_addr.port(), &my_id)
         .map_err(|e| tracing::warn!(error = %e, "mDNS advertise failed"))
         .ok();
 

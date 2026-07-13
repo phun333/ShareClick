@@ -20,7 +20,7 @@ pub struct Advertiser {
 }
 
 /// Advertise this server so clients can discover it by name.
-pub fn advertise(name: &str, port: u16) -> anyhow::Result<Advertiser> {
+pub fn advertise(name: &str, port: u16, id: &str) -> anyhow::Result<Advertiser> {
     let daemon = ServiceDaemon::new()?;
     let host_name = format!("{name}.local.");
     let info = ServiceInfo::new(
@@ -65,7 +65,7 @@ pub fn discover(timeout: Duration) -> anyhow::Result<Option<SocketAddr>> {
 }
 
 /// List every server seen within `timeout` (used by the `discover` CLI).
-pub fn list(timeout: Duration) -> anyhow::Result<Vec<(String, SocketAddr)>> {
+pub fn list(timeout: Duration) -> anyhow::Result<Vec<(String, SocketAddr, String)>> {
     let daemon = ServiceDaemon::new()?;
     let receiver = daemon.browse(SERVICE_TYPE)?;
     let deadline = Instant::now() + timeout;
@@ -79,9 +79,14 @@ pub fn list(timeout: Duration) -> anyhow::Result<Vec<(String, SocketAddr)>> {
         match receiver.recv_timeout(remaining) {
             Ok(ServiceEvent::ServiceResolved(info)) => {
                 if let Some(ip) = first_v4(&info) {
+                    let id = info
+                        .get_property_val_str("id")
+                        .unwrap_or_default()
+                        .to_string();
                     out.push((
                         info.get_fullname().to_string(),
                         SocketAddr::new(IpAddr::V4(ip), info.get_port()),
+                        id,
                     ));
                 }
             }

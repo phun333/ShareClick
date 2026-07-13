@@ -392,6 +392,9 @@ impl SettingsApp {
             // Roles are gone from the UI: pairing decides who listens, control
             // is symmetric. (CLI serve/connect still exist for power users.)
             role: None,
+            device_id: Config::load(&Config::default_path())
+                .ok()
+                .and_then(|c| c.device_id),
             machines: vec![this, other],
         };
         cfg.validate()?;

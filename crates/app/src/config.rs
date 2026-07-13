@@ -33,6 +33,10 @@ pub struct Config {
     /// or `"client"` (is controlled).
     #[serde(default)]
     pub role: Option<String>,
+    /// Stable random device identity (generated on first run). Pairing and
+    /// peer identity key off this — names are just display labels.
+    #[serde(default)]
+    pub device_id: Option<String>,
     /// Arrangement offset (pixels): the *other* screen's top (for left/right
     /// adjacency) or left (for top/bottom) relative to this screen's, so the
     /// cursor crosses at the exact placed position. 0 = tops/edges aligned.
@@ -69,6 +73,26 @@ fn default_true() -> bool {
 }
 
 impl Config {
+    /// Load-or-create the stable device id, persisting it on first use.
+    pub fn ensure_device_id(path: &std::path::Path) -> String {
+        let mut cfg = match Self::load(path) {
+            Ok(c) => c,
+            Err(_) => return "anon".into(),
+        };
+        if let Some(id) = &cfg.device_id {
+            return id.clone();
+        }
+        use std::time::{SystemTime, UNIX_EPOCH};
+        let n = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let id = format!("{:016x}", (n as u64) ^ ((std::process::id() as u64) << 48));
+        cfg.device_id = Some(id.clone());
+        let _ = cfg.save(path);
+        id
+    }
+
     /// Default config path, e.g. `~/.config/shareclick/config.toml`.
     pub fn default_path() -> PathBuf {
         dirs::config_dir()
@@ -110,6 +134,7 @@ impl Config {
             auto_edge_switch: true,
             server_host: Some("192.168.1.20".into()),
             role: Some("server".into()),
+            device_id: None,
             offset: 0,
             machines: vec![
                 Machine {
